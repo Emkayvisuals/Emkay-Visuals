@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { PORTFOLIO_CONTENT, WEB3FORMS_ACCESS_KEY } from '../data/portfolioContent';
-import { saveProjectBrief, trackClick } from '../lib/analytics';
+import { saveProjectBrief } from '../lib/analytics';
+import { getResolvedSocialLinks, getPlatformMeta } from '../lib/socialLinks';
 import {
   Mail,
   MessageSquare,
-  Instagram,
   Sparkles,
   Send,
   CheckCircle2,
@@ -13,7 +13,6 @@ import {
   Check,
   ArrowUpRight,
   Loader2,
-  RefreshCw,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -28,11 +27,67 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 }) => {
   const { contact, socials } = PORTFOLIO_CONTENT;
 
+  if (contact?.enabled === false) {
+    return null;
+  }
+
+  const badgeMain = contact?.badgeMain || 'Commission //';
+  const badgeAccent = contact?.badgeAccent || 'Available';
+  const headingMain = contact?.headingMain || 'Let’s Construct Your Next';
+  const headingAccent = contact?.headingAccent || 'Visual Landmark';
+  const subtext =
+    contact?.subtext ||
+    'Whether you need a full visual identity system, high-end motion graphics, or theatrical key art, brief me on your project below. Serious inquiries typically receive a comprehensive proposal within 4 hours.';
+  const directChannelsTitle = contact?.directChannelsHeading || 'Direct Channels';
+  const whatsappButtonText = contact?.whatsappCardTitle || 'Chat on WhatsApp';
+  const emailButtonText = contact?.emailCardTitle || 'Direct Email';
+  const copyEmailText = contact?.copyEmailText || 'Click to copy email';
+  const copySuccessText = contact?.copiedEmailText || 'Email copied to clipboard!';
+  const formCardTitle = contact?.formTitle || 'Project Inquiry & Commission Brief';
+  const formStepIndicator = contact?.formStepBadge || 'Step 01 // Form';
+  const nameLabel = contact?.nameLabel || 'Your Name / Company *';
+  const namePlaceholder = contact?.namePlaceholder || 'e.g. Elena Rostova / Aether Records';
+  const emailLabel = contact?.emailLabel || 'Your Email Address *';
+  const emailPlaceholder = contact?.emailPlaceholder || 'name@company.com';
+  const deadlineLabel = contact?.deadlineLabel || 'Target Deadline / Timeline';
+  const deadlinePlaceholder = contact?.deadlinePlaceholder || 'e.g. Next 3 weeks / Flexible';
+  const referenceLabel = contact?.referenceLinkLabel || 'Reference Link / Moodboard URL (Optional)';
+  const referencePlaceholder = contact?.referenceLinkPlaceholder || 'https://...';
+  const serviceLabel = contact?.serviceLabel || 'Service Required';
+  const budgetLabel = contact?.budgetLabel || 'Estimated Budget Tier (USD)';
+  const messageLabel = contact?.messageLabel || 'Project Vision & Deliverables *';
+  const messagePlaceholder =
+    contact?.messagePlaceholder ||
+    'Tell me about your release date, narrative references, dimensions, sound/theme inspirations, and key deliverables...';
+  const submitButtonText = contact?.submitButtonText || 'Send Project Brief';
+  const submitLoadingText = contact?.submittingButtonText || 'Sending Project Brief...';
+  const successTitle = contact?.successTitle || 'Transmission Received';
+  const successButtonText = contact?.sendAnotherButtonText || 'Send Another Message';
+  const responseTime = contact?.responseTime || 'Average response time: < 4 hours worldwide';
+
+  const servicesOptions = contact?.servicesOptions || [
+    'Theatrical & Movie Key Art',
+    'Sports Visuals & Matchday Creative',
+    'Motion Graphics & Animation',
+    'Cover Art & Album Packaging',
+    'Full Visual Identity Systems',
+    'Creative Direction Consultation',
+  ];
+
+  const budgetRanges = contact?.budgetRanges || [
+    '$50 - $500',
+    '$500 - $1,000',
+    '$1,000 - $2,500',
+    '$2,500 - $5,000',
+    '$5,000 - $7,500',
+    '$7,500 - $10,000',
+  ];
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    service: contact.servicesOptions[0],
-    budget: contact.budgetRanges[1],
+    service: servicesOptions[0] || 'Theatrical & Movie Key Art',
+    budget: budgetRanges[0] || '$50 - $500',
     deadline: '',
     message: '',
     referenceLink: '',
@@ -56,12 +111,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
       setFormData((prev) => ({
         ...prev,
         service:
-          contact.servicesOptions.find((s) => s.toLowerCase().includes(prefilledService.toLowerCase())) ||
+          servicesOptions.find((s) => s.toLowerCase().includes(prefilledService.toLowerCase())) ||
           prefilledService,
         message: prev.message ? prev.message : `Hi Emkay, I would like to inquire about your ${prefilledService} service.`,
       }));
     }
-  }, [prefilledService, contact.servicesOptions]);
+  }, [prefilledService, servicesOptions]);
 
   useEffect(() => {
     if (prefilledProject) {
@@ -150,7 +205,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
         emailSent = true;
       }
     } catch (err: unknown) {
-      console.error("Web3Forms error:", err);
+      console.error('Web3Forms error:', err);
     }
 
     try {
@@ -165,7 +220,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
       });
       firestoreSaved = true;
     } catch (err: unknown) {
-      console.error("Firestore save error:", err);
+      console.error('Firestore save error:', err);
     }
 
     if (emailSent || firestoreSaved) {
@@ -193,7 +248,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
   return (
     <section id="contact" className="relative py-20 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
-      {/* Background Soft Glows - Very subtle */}
+      {/* Background Soft Glows */}
       <div
         className="pointer-events-none absolute top-10 left-10 w-[400px] h-[400px] rounded-full blur-[170px] opacity-10"
         style={{ background: '#8116E0' }}
@@ -215,137 +270,80 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           <div>
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-3 sm:mb-4">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{contact.badgeMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{contact.badgeAccent}</span></span>
+              <span>
+                {badgeMain}{' '}
+                {badgeAccent && (
+                  <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">
+                    {badgeAccent}
+                  </span>
+                )}
+              </span>
             </div>
 
             <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight leading-[1.15] mb-3 sm:mb-4">
-              {contact.headingMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{contact.headingAccent}</span>
+              {headingMain}{' '}
+              <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">
+                {headingAccent}
+              </span>
             </h2>
 
             <p className="text-sm sm:text-base text-white/70 font-normal leading-relaxed mb-6 sm:mb-8">
-              {contact.subtext}
+              {subtext}
             </p>
 
             {/* Direct Connect Action Buttons */}
             <div className="space-y-3 mb-6 sm:mb-8">
               <span className="text-xs font-semibold text-white/45 tracking-wide block mb-1.5">
-                Direct Channels:
+                {directChannelsTitle}
               </span>
 
-              {/* WhatsApp Button - 44px+ tap target */}
-              <motion.a
-                href={socials.whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                id="contact-whatsapp-btn"
-                whileHover={{ scale: 1.015, x: 2 }}
-                whileTap={{ scale: 0.98 }}
-                className="group flex items-center justify-between p-3.5 sm:p-4 rounded-2xl glass-panel border border-white/10 hover:border-[#25D366]/60 transition-colors duration-300 min-h-[56px] bg-[#050505]/70"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#25D366]/20 border border-[#25D366]/40 flex items-center justify-center text-[#25D366] group-hover:scale-105 transition-all shrink-0">
-                    <MessageSquare className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <span className="font-bold text-sm text-[#FEFFFC] block">
-                      Chat on WhatsApp
-                    </span>
-                    <span className="text-xs text-white/50 font-normal">
-                      {socials.whatsappDisplay}
-                    </span>
-                  </div>
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-white/40 group-hover:text-[#25D366] transition-transform shrink-0" />
-              </motion.a>
+              {getResolvedSocialLinks(socials)
+                .filter((item) => item.visible !== false && item.isValid)
+                .map((item, idx) => {
+                  const meta = getPlatformMeta(item.platform);
+                  const IconComp = meta.icon;
+                  const isExternal = !item.isMailto;
 
-              {/* Instagram #1: Graphic & Motion Designs */}
-              <motion.a
-                href={socials.instagramDesigns.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                id="contact-instagram-designs-btn"
-                whileHover={{ scale: 1.015, x: 2 }}
-                whileTap={{ scale: 0.98 }}
-                className="group flex items-center justify-between p-3.5 sm:p-4 rounded-2xl glass-panel border border-white/10 hover:border-[#E1306C]/60 transition-colors duration-300 min-h-[56px] bg-[#050505]/70"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#E1306C]/20 border border-[#E1306C]/40 flex items-center justify-center text-[#E1306C] group-hover:scale-105 transition-all shrink-0">
-                    <Instagram className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-[#FEFFFC]">
-                        {socials.instagramDesigns.handle}
-                      </span>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-[#D0FF00] tracking-wide">
-                        Main
-                      </span>
-                    </div>
-                    <span className="text-xs text-white/55 font-normal">
-                      {socials.instagramDesigns.label}
-                    </span>
-                  </div>
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-white/40 group-hover:text-[#E1306C] transition-transform shrink-0" />
-              </motion.a>
-
-              {/* Instagram #2: Digital Art & Photo Manipulations */}
-              <motion.a
-                href={socials.instagramFx.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                id="contact-instagram-fx-btn"
-                whileHover={{ scale: 1.015, x: 2 }}
-                whileTap={{ scale: 0.98 }}
-                className="group flex items-center justify-between p-3.5 sm:p-4 rounded-2xl glass-panel border border-white/10 hover:border-[#8116E0]/60 transition-colors duration-300 min-h-[56px] bg-[#050505]/70"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#8116E0]/20 border border-[#8116E0]/40 flex items-center justify-center text-[#FEFFFC] group-hover:scale-105 transition-all shrink-0">
-                    <Instagram className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-[#FEFFFC]">
-                        {socials.instagramFx.handle}
-                      </span>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#8116E0]/30 text-[#FEFFFC] tracking-wide">
-                        FX / Art
-                      </span>
-                    </div>
-                    <span className="text-xs text-white/55 font-normal">
-                      {socials.instagramFx.label}
-                    </span>
-                  </div>
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-white/40 group-hover:text-[#8116E0] transition-transform shrink-0" />
-              </motion.a>
-
-              {/* Email Direct Button */}
-              <motion.a
-                href={socials.emailMailto}
-                id="contact-email-btn"
-                whileHover={{ scale: 1.015, x: 2 }}
-                whileTap={{ scale: 0.98 }}
-                className="group flex items-center justify-between p-3.5 sm:p-4 rounded-2xl glass-panel border border-white/10 hover:border-[#D0FF00]/60 transition-colors duration-300 min-h-[56px] bg-[#050505]/70"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#D0FF00]/15 border border-[#D0FF00]/30 flex items-center justify-center text-[#D0FF00] group-hover:scale-105 transition-all shrink-0">
-                    <Mail className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <span className="font-bold text-sm text-[#FEFFFC] block">
-                      Direct Email
-                    </span>
-                    <span className="text-xs text-white/50 font-normal">
-                      {socials.email}
-                    </span>
-                  </div>
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-white/40 group-hover:text-[#D0FF00] transition-transform shrink-0" />
-              </motion.a>
+                  return (
+                    <motion.a
+                      key={item.id || idx}
+                      href={item.url}
+                      target={isExternal ? '_blank' : undefined}
+                      rel={isExternal ? 'noopener noreferrer' : undefined}
+                      id={`contact-channel-${item.platform.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${idx}`}
+                      whileHover={{ scale: 1.015, x: 2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`group flex items-center justify-between p-3.5 sm:p-4 rounded-2xl glass-panel border border-white/10 ${meta.hoverBorder} transition-colors duration-300 min-h-[56px] bg-[#050505]/70`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-all shrink-0 border ${meta.cardBg}`}
+                        >
+                          <IconComp className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm text-[#FEFFFC] block truncate">
+                              {item.label || item.platform}
+                            </span>
+                            <span
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${meta.badgeBg}`}
+                            >
+                              {item.platform}
+                            </span>
+                          </div>
+                          <span className="text-xs text-white/55 font-normal block truncate">
+                            {item.description || item.displayHandle}
+                          </span>
+                        </div>
+                      </div>
+                      <ArrowUpRight className="w-4 h-4 text-white/40 group-hover:text-white transition-transform shrink-0 ml-2" />
+                    </motion.a>
+                  );
+                })}
             </div>
 
-            {/* Quick Copy Email action - 44px min tap target */}
+            {/* Quick Copy Email action */}
             <button
               type="button"
               onClick={handleCopyEmail}
@@ -354,12 +352,14 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
               {copiedEmail ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-[#D0FF00]" />
-                  <span className="text-[#D0FF00] font-medium">Email copied to clipboard!</span>
+                  <span className="text-[#D0FF00] font-medium">{copySuccessText}</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5" />
-                  <span>Click to copy email ({socials.email})</span>
+                  <span>
+                    {copyEmailText} ({socials.email})
+                  </span>
                 </>
               )}
             </button>
@@ -367,7 +367,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
           <div className="mt-6 pt-4 border-t border-white/10 text-xs text-white/45 font-medium flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#D0FF00] animate-pulse"></span>
-            <span>{contact.responseTime}</span>
+            <span>{responseTime}</span>
           </div>
         </motion.div>
 
@@ -394,7 +394,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
                 </div>
                 <h3 className="font-montserrat font-medium italic text-2xl sm:text-3xl text-[#D0FF00] mb-2">
-                  Transmission Received
+                  {successTitle}
                 </h3>
                 <p className="text-white/70 max-w-md mb-6 font-normal text-sm sm:text-base leading-relaxed px-2">
                   Thank you, <span className="text-[#D0FF00] font-bold">{formData.name}</span>. Your project brief has been successfully sent to <span className="text-white font-medium">{socials.email}</span>. Emkay will review your specifications and reply to{' '}
@@ -408,8 +408,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                       setFormData({
                         name: '',
                         email: '',
-                        service: contact.servicesOptions[0],
-                        budget: contact.budgetRanges[1],
+                        service: servicesOptions[0] || '',
+                        budget: budgetRanges[0] || '$50 - $500',
                         deadline: '',
                         message: '',
                         referenceLink: '',
@@ -418,7 +418,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                     }}
                     className="px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-[#FEFFFC] text-xs font-semibold transition-colors cursor-pointer min-h-[44px] flex items-center justify-center"
                   >
-                    Send Another Message
+                    {successButtonText}
                   </button>
                   <a
                     href={socials.whatsappUrl}
@@ -435,10 +435,10 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
               <form onSubmit={handleSubmit} noValidate className="space-y-5 sm:space-y-6">
                 <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-white/10">
                   <h3 className="font-montserrat font-medium italic text-base sm:text-lg text-[#D0FF00]">
-                    Project Inquiry &amp; Commission Brief
+                    {formCardTitle}
                   </h3>
                   <span className="text-xs font-semibold text-[#FEFFFC]/70">
-                    Step <span className="font-baskervville italic text-[#D0FF00]">01</span> // Form
+                    {formStepIndicator}
                   </span>
                 </div>
 
@@ -477,12 +477,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                   <div>
                     <label className="block text-xs font-medium text-white/70 mb-2 tracking-wide">
-                      Your Name / Company *
+                      {nameLabel}
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Elena Rostova / Aether Records"
+                      placeholder={namePlaceholder}
                       value={formData.name}
                       onChange={(e) => {
                         setFormData({ ...formData, name: e.target.value });
@@ -505,12 +505,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
                   <div>
                     <label className="block text-xs font-medium text-white/70 mb-2 tracking-wide">
-                      Your Email Address *
+                      {emailLabel}
                     </label>
                     <input
                       type="email"
                       required
-                      placeholder="name@company.com"
+                      placeholder={emailPlaceholder}
                       value={formData.email}
                       onChange={(e) => {
                         setFormData({ ...formData, email: e.target.value });
@@ -536,12 +536,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                   <div>
                     <label className="block text-xs font-medium text-white/70 mb-2 tracking-wide">
-                      Target Deadline / Timeline
+                      {deadlineLabel}
                     </label>
                     <input
                       type="text"
                       maxLength={50}
-                      placeholder="e.g. Next 3 weeks / Flexible"
+                      placeholder={deadlinePlaceholder}
                       value={formData.deadline}
                       onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                       className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 focus:border-[#D0FF00] focus:ring-1 focus:ring-[#D0FF00] text-sm text-[#FEFFFC] placeholder-white/25 outline-none transition-colors min-h-[46px]"
@@ -550,12 +550,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
                   <div>
                     <label className="block text-xs font-medium text-white/70 mb-2 tracking-wide">
-                      Reference Link / Moodboard URL (Optional)
+                      {referenceLabel}
                     </label>
                     <input
                       type="url"
                       maxLength={250}
-                      placeholder="https://..."
+                      placeholder={referencePlaceholder}
                       value={formData.referenceLink}
                       onChange={(e) => setFormData({ ...formData, referenceLink: e.target.value })}
                       className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 focus:border-[#D0FF00] focus:ring-1 focus:ring-[#D0FF00] text-sm text-[#FEFFFC] placeholder-white/25 outline-none transition-colors min-h-[46px]"
@@ -580,14 +580,14 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                 {/* Service Selection */}
                 <div>
                   <label className="block text-xs font-medium text-white/70 mb-2 tracking-wide">
-                    Service Required
+                    {serviceLabel}
                   </label>
                   <select
                     value={formData.service}
                     onChange={(e) => setFormData({ ...formData, service: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl bg-[#111] border border-white/10 focus:border-[#D0FF00] focus:ring-1 focus:ring-[#D0FF00] text-sm text-[#FEFFFC] outline-none transition-colors cursor-pointer min-h-[46px]"
                   >
-                    {contact.servicesOptions.map((opt) => (
+                    {servicesOptions.map((opt) => (
                       <option key={opt} value={opt} className="bg-[#111] text-white">
                         {opt}
                       </option>
@@ -595,13 +595,13 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   </select>
                 </div>
 
-                {/* Budget Range - Tap targets at least 44px */}
+                {/* Budget Range - 2 columns on mobile (3 rows for 6 items), 3 columns on desktop */}
                 <div>
                   <label className="block text-xs font-medium text-white/70 mb-2 tracking-wide">
-                    Estimated Budget Tier (USD)
+                    {budgetLabel}
                   </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {contact.budgetRanges.map((b) => {
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
+                    {budgetRanges.map((b) => {
                       const isSelected = formData.budget === b;
                       return (
                         <button
@@ -624,12 +624,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                 {/* Message / Project Specs */}
                 <div>
                   <label className="block text-xs font-medium text-white/70 mb-2 tracking-wide">
-                    Project Vision &amp; Deliverables *
+                    {messageLabel}
                   </label>
                   <textarea
                     rows={4}
                     required
-                    placeholder="Tell me about your release date, narrative references, dimensions, sound/theme inspirations, and key deliverables..."
+                    placeholder={messagePlaceholder}
                     value={formData.message}
                     onChange={(e) => {
                       setFormData({ ...formData, message: e.target.value });
@@ -650,7 +650,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   )}
                 </div>
 
-                {/* Submit Pill Button - min-h-[48px] with loading state */}
+                {/* Submit Pill Button */}
                 <motion.button
                   type="submit"
                   disabled={loading}
@@ -664,12 +664,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 text-[#050505] animate-spin" />
-                      <span>Sending Project Brief...</span>
+                      <span>{submitLoadingText}</span>
                     </>
                   ) : (
                     <>
                       <Send className="w-4 h-4 text-[#050505] group-hover:translate-x-1 group-hover:-translate-y-0.5 transition-transform" />
-                      <span>Send Project Brief</span>
+                      <span>{submitButtonText}</span>
                     </>
                   )}
                 </motion.button>

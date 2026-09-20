@@ -1,11 +1,22 @@
 import React, { useState } from 'react';
 import { PORTFOLIO_CONTENT } from '../data/portfolioContent';
-import { MessageSquare, Instagram, Mail, X, Sparkles } from 'lucide-react';
+import { getResolvedSocialLinks, getPlatformMeta } from '../lib/socialLinks';
+import { MessageSquare, X, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const FloatingContactBar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { socials } = PORTFOLIO_CONTENT;
+  const { socials, contact, floatingContact } = PORTFOLIO_CONTENT;
+
+  // If entire contact section is disabled, or if explicitly toggled off
+  if (contact?.enabled === false || floatingContact?.enabled === false) {
+    return null;
+  }
+
+  const quickConnectTitle = floatingContact?.title || 'Quick Connect';
+  const resolvedLinks = getResolvedSocialLinks(socials).filter(
+    (item) => item.visible !== false && item.isValid
+  );
 
   return (
     <div className="fixed bottom-5 right-4 sm:right-6 z-40 flex flex-col items-end">
@@ -17,92 +28,55 @@ export const FloatingContactBar: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 15, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="mb-3 w-72 rounded-2xl glass-panel border border-white/15 bg-[#080808]/95 backdrop-blur-xl p-3.5 shadow-[0_15px_40px_rgba(0,0,0,0.85)] flex flex-col gap-2"
+            className="mb-3 w-72 max-h-[70vh] overflow-y-auto rounded-2xl glass-panel border border-white/15 bg-[#080808]/95 backdrop-blur-xl p-3.5 shadow-[0_15px_40px_rgba(0,0,0,0.85)] flex flex-col gap-2"
           >
-            <div className="flex items-center justify-between pb-2 border-b border-white/10 px-1">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10 px-1 shrink-0">
               <span className="text-[11px] font-bold text-[#D0FF00] tracking-wide flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3" />
-                Quick Connect
+                {quickConnectTitle}
               </span>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-6 h-6 rounded-full flex items-center justify-center text-white/50 hover:text-white"
+                className="w-6 h-6 rounded-full flex items-center justify-center text-white/50 hover:text-white cursor-pointer"
                 aria-label="Close Quick Connect"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            {/* WhatsApp */}
-            <a
-              href={socials.whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.06] transition-colors group min-h-[44px]"
-            >
-              <div className="w-8 h-8 rounded-lg bg-[#25D366]/20 border border-[#25D366]/40 flex items-center justify-center text-[#25D366] shrink-0">
-                <MessageSquare className="w-4 h-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-[#FEFFFC] group-hover:text-[#25D366] transition-colors">
-                  WhatsApp Direct
-                </span>
-                <span className="text-[10px] text-white/50">{socials.whatsappDisplay}</span>
-              </div>
-            </a>
+            <div className="flex flex-col gap-1.5">
+              {resolvedLinks.map((item, idx) => {
+                const meta = getPlatformMeta(item.platform);
+                const IconComp = meta.icon;
+                const isExternal = !item.isMailto;
 
-            {/* Instagram Main */}
-            <a
-              href={socials.instagramDesigns.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.06] transition-colors group min-h-[44px]"
-            >
-              <div className="w-8 h-8 rounded-lg bg-[#E1306C]/20 border border-[#E1306C]/40 flex items-center justify-center text-[#E1306C] shrink-0">
-                <Instagram className="w-4 h-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-[#FEFFFC] group-hover:text-[#D0FF00] transition-colors">
-                  {socials.instagramDesigns.handle}
-                </span>
-                <span className="text-[10px] text-white/50">{socials.instagramDesigns.label}</span>
-              </div>
-            </a>
-
-            {/* Instagram FX */}
-            <a
-              href={socials.instagramFx.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.06] transition-colors group min-h-[44px]"
-            >
-              <div className="w-8 h-8 rounded-lg bg-[#8116E0]/20 border border-[#8116E0]/40 flex items-center justify-center text-[#FEFFFC] shrink-0">
-                <Instagram className="w-4 h-4 text-[#8116E0]" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-[#FEFFFC] group-hover:text-[#D0FF00] transition-colors">
-                  {socials.instagramFx.handle}
-                </span>
-                <span className="text-[10px] text-white/50">{socials.instagramFx.label}</span>
-              </div>
-            </a>
-
-            {/* Email */}
-            <a
-              href={socials.emailMailto}
-              className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/[0.06] transition-colors group min-h-[44px]"
-            >
-              <div className="w-8 h-8 rounded-lg bg-[#D0FF00]/15 border border-[#D0FF00]/30 flex items-center justify-center text-[#D0FF00] shrink-0">
-                <Mail className="w-4 h-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-[#FEFFFC] group-hover:text-[#D0FF00] transition-colors">
-                  Email Emkay
-                </span>
-                <span className="text-[10px] text-white/50">{socials.email}</span>
-              </div>
-            </a>
+                return (
+                  <a
+                    key={item.id || idx}
+                    href={item.url}
+                    target={isExternal ? '_blank' : undefined}
+                    rel={isExternal ? 'noopener noreferrer' : undefined}
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/[0.06] transition-colors group min-h-[44px]"
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${meta.cardBg}`}
+                    >
+                      <IconComp className="w-4 h-4" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs font-bold text-[#FEFFFC] group-hover:text-[#D0FF00] transition-colors truncate">
+                        {item.label || item.platform}
+                      </span>
+                      <span className="text-[10px] text-white/50 truncate">
+                        {item.description || item.displayHandle}
+                      </span>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

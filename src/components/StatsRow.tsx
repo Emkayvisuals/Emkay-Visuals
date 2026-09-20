@@ -34,7 +34,7 @@ const StatCounter: React.FC<StatCardProps> = ({ value, suffix, label, sublabel, 
       const updateCount = (timestamp: number) => {
         if (!startTime) startTime = timestamp;
         const progress = Math.min((timestamp - startTime) / duration, 1);
-        
+
         // Smooth cubic ease-out function
         const easeOutProgress = 1 - Math.pow(1 - progress, 3);
         const currentCount = Math.floor(easeOutProgress * value);
@@ -110,7 +110,14 @@ const StatCounter: React.FC<StatCardProps> = ({ value, suffix, label, sublabel, 
 };
 
 export const StatsRow: React.FC = () => {
-  const { stats } = PORTFOLIO_CONTENT;
+  const { stats, statsSection } = PORTFOLIO_CONTENT;
+
+  if (statsSection?.enabled === false) {
+    return null;
+  }
+
+  const visibleStats = (stats || []).filter((s) => s.visible !== false);
+  if (visibleStats.length === 0) return null;
 
   return (
     <section className="relative py-14 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto overflow-hidden">
@@ -122,9 +129,9 @@ export const StatsRow: React.FC = () => {
 
       {/* Grid: 2x2 on mobile, 4 on desktop */}
       <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
-        {stats.map((stat, idx) => (
+        {visibleStats.map((stat, idx) => (
           <StatCounter
-            key={stat.label}
+            key={`${stat.label}-${idx}`}
             value={stat.value}
             suffix={stat.suffix}
             label={stat.label}

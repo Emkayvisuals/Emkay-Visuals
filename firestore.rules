@@ -18,5 +18,9 @@ service cloud.firestore {
       allow create, update: if true;
       allow delete: if request.auth != null && request.auth.token.email == 'emkayvisuals@gmail.com';
     }
+    match /media/{document} {
+      allow read: if true;
+      allow write, delete: if request.auth != null && request.auth.token.email == 'emkayvisuals@gmail.com';
+    }
   }
 }

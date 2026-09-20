@@ -6,9 +6,24 @@ import { motion } from 'motion/react';
 export const ProcessSection: React.FC = () => {
   const { process, processSection } = PORTFOLIO_CONTENT;
 
+  if (processSection?.enabled === false) {
+    return null;
+  }
+
+  const badgeMain = processSection?.badgeMain || 'Methodology //';
+  const badgeAccent = processSection?.badgeAccent || 'Zero Noise';
+  const headingMain = processSection?.headingMain || 'A Rigorous 4-Step';
+  const headingAccent = processSection?.headingAccent || 'Creative Roadmap';
+  const subtext =
+    processSection?.subtext ||
+    'Every project moves through an airtight, predictable progression ensuring full creative alignment and pristine execution without unnecessary delays.';
+  const phasePrefix = processSection?.phasePrefix || 'Phase //';
+
+  const visibleSteps = (process || []).filter((s) => s.visible !== false);
+
   return (
     <section id="process" className="relative py-20 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
-      {/* Background Glow - Very subtle */}
+      {/* Background Glow */}
       <div
         className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full blur-[170px] opacity-10"
         style={{ background: 'radial-gradient(circle, #8116E0 0%, #D0FF00 100%)' }}
@@ -24,19 +39,29 @@ export const ProcessSection: React.FC = () => {
       >
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-3">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>{processSection.badgeMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{processSection.badgeAccent}</span></span>
+          <span>
+            {badgeMain}{' '}
+            {badgeAccent && (
+              <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">
+                {badgeAccent}
+              </span>
+            )}
+          </span>
         </div>
         <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight">
-          {processSection.headingMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{processSection.headingAccent}</span>
+          {headingMain}{' '}
+          <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">
+            {headingAccent}
+          </span>
         </h2>
         <p className="mt-3.5 text-sm sm:text-base text-white/70 font-normal max-w-xl mx-auto">
-          {processSection.subtext}
+          {subtext}
         </p>
       </motion.div>
 
       {/* 4-Step Grid */}
       <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        {process.map((step, idx) => (
+        {visibleSteps.map((step, idx) => (
           <motion.div
             key={step.stepNumber}
             id={`process-step-${step.stepNumber}`}
@@ -82,7 +107,12 @@ export const ProcessSection: React.FC = () => {
 
             {/* Bottom Step Indicator */}
             <div className="mt-5 pt-3.5 border-t border-white/[0.06] flex items-center justify-between text-xs text-white/45 font-medium">
-              <span>Phase // <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]/60">0{idx + 1}</span></span>
+              <span>
+                {phasePrefix}{' '}
+                <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]/60">
+                  0{idx + 1}
+                </span>
+              </span>
               <span className="w-2 h-2 rounded-full bg-[#D0FF00] opacity-40 group-hover:opacity-100 group-hover:shadow-[0_0_10px_#D0FF00] transition-all"></span>
             </div>
           </motion.div>

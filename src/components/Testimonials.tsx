@@ -6,9 +6,22 @@ import { motion } from 'motion/react';
 export const Testimonials: React.FC = () => {
   const { testimonials, testimonialsSection } = PORTFOLIO_CONTENT;
 
+  if (testimonialsSection?.enabled === false) {
+    return null;
+  }
+
+  const badgeMain = testimonialsSection?.badgeMain || 'Client';
+  const badgeAccent = testimonialsSection?.badgeAccent || 'Endorsements';
+  const headingMain = testimonialsSection?.headingMain || 'Proven Track Record of';
+  const headingAccent = testimonialsSection?.headingAccent || 'Excellence';
+  const satisfactionText =
+    testimonialsSection?.satisfactionText || '5.0 Average Client Satisfaction';
+
+  const visibleTestimonials = (testimonials || []).filter((t) => t.visible !== false);
+
   return (
     <section className="relative py-20 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
-      {/* Background glow - very subtle */}
+      {/* Background glow */}
       <div
         className="pointer-events-none absolute bottom-0 left-1/3 w-[400px] h-[300px] rounded-full blur-[160px] opacity-10"
         style={{ background: '#8116E0' }}
@@ -25,25 +38,37 @@ export const Testimonials: React.FC = () => {
         <div>
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>{testimonialsSection.badgeMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{testimonialsSection.badgeAccent}</span></span>
+            <span>
+              {badgeMain}{' '}
+              {badgeAccent && (
+                <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">
+                  {badgeAccent}
+                </span>
+              )}
+            </span>
           </div>
           <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight leading-[1.15]">
-            {testimonialsSection.headingMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{testimonialsSection.headingAccent}</span>
+            {headingMain}{' '}
+            <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">
+              {headingAccent}
+            </span>
           </h2>
         </div>
-        <div className="flex items-center gap-2 text-xs text-white/60 font-medium">
-          <div className="flex text-[#D0FF00]">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-4 h-4 fill-current" />
-            ))}
+        {satisfactionText && (
+          <div className="flex items-center gap-2 text-xs text-white/60 font-medium">
+            <div className="flex text-[#D0FF00]">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="w-4 h-4 fill-current" />
+              ))}
+            </div>
+            <span>{satisfactionText}</span>
           </div>
-          <span>{testimonialsSection.satisfactionText}</span>
-        </div>
+        )}
       </motion.div>
 
       {/* Testimonials Grid */}
       <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-        {testimonials.map((t, idx) => (
+        {visibleTestimonials.map((t, idx) => (
           <motion.div
             key={t.id}
             id={`testimonial-card-${t.id}`}
@@ -75,7 +100,7 @@ export const Testimonials: React.FC = () => {
                 </span>
               </div>
 
-              {/* Quote text - Baskervville supporting italic */}
+              {/* Quote text */}
               <p className="font-baskervville italic text-base sm:text-lg text-[#FEFFFC]/90 leading-relaxed mb-6 font-normal">
                 “{t.comment}”
               </p>
@@ -85,7 +110,10 @@ export const Testimonials: React.FC = () => {
             <div className="pt-4 border-t border-white/[0.06] flex items-center gap-3.5">
               <img
                 src={t.avatar}
-                alt={t.name}
+                alt={t.avatarAlt || `${t.name} – ${t.role} at ${t.company}`}
+                width="44"
+                height="44"
+                loading="lazy"
                 className="w-11 h-11 rounded-full object-cover border border-white/20 group-hover:border-[#D0FF00]/50 transition-colors"
                 referrerPolicy="no-referrer"
               />

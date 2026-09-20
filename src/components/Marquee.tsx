@@ -3,7 +3,13 @@ import { PORTFOLIO_CONTENT } from '../data/portfolioContent';
 import { Sparkles } from 'lucide-react';
 
 export const Marquee: React.FC = () => {
-  const items = PORTFOLIO_CONTENT.hero.marqueeTicker;
+  if (PORTFOLIO_CONTENT.marqueeSection?.enabled === false) {
+    return null;
+  }
+
+  const items = PORTFOLIO_CONTENT.hero?.marqueeTicker || [];
+  if (items.length === 0) return null;
+
   // Duplicate for seamless loop
   const displayItems = [...items, ...items, ...items];
 

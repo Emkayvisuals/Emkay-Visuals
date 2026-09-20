@@ -6,9 +6,11 @@ import { Marquee } from './components/Marquee';
 import { StatsRow } from './components/StatsRow';
 import { ServicesBento } from './components/ServicesBento';
 import { WorkGallery } from './components/WorkGallery';
+import { PortfolioPage } from './components/PortfolioPage';
 import { AboutSection } from './components/AboutSection';
 import { ProcessSection } from './components/ProcessSection';
 import { Testimonials } from './components/Testimonials';
+import { FAQSection } from './components/FAQSection';
 import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
 import { FloatingContactBar } from './components/FloatingContactBar';
@@ -20,6 +22,22 @@ export default function App() {
   const [tick, setTick] = useState(0);
   const [prefilledService, setPrefilledService] = useState<string | undefined>(undefined);
   const [prefilledProject, setPrefilledProject] = useState<string | undefined>(undefined);
+  const [currentPath, setCurrentPath] = useState<string>(() => window.location.pathname);
+
+  // Sync route changes on popstate (Back / Forward browser buttons)
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateTo = (url: string) => {
+    window.history.pushState({}, '', url);
+    setCurrentPath(window.location.pathname);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     trackVisit();
@@ -57,8 +75,8 @@ export default function App() {
     }
   }, [tick]);
 
-  const path = window.location.pathname;
-  if (path === '/admin') {
+  // Route Dispatching
+  if (currentPath === '/admin' || currentPath.startsWith('/admin/')) {
     return <AdminDashboard />;
   }
 
@@ -70,6 +88,17 @@ export default function App() {
     setPrefilledProject(projectTitle);
   };
 
+  // Dedicated /portfolio archive route
+  if (currentPath === '/portfolio' || currentPath.startsWith('/portfolio/')) {
+    return (
+      <PortfolioPage
+        onNavigateHome={() => navigateTo('/')}
+        onSelectProjectForContact={handleSelectProjectForContact}
+      />
+    );
+  }
+
+  // Primary Homepage View
   return (
     <div className="relative min-h-screen bg-[#050505] text-[#FEFFFC] selection:bg-[#D0FF00] selection:text-[#050505] overflow-x-hidden w-full">
       {/* Curtain Preloader on first load */}
@@ -90,8 +119,17 @@ export default function App() {
       {/* Bento-Style Services Grid */}
       <ServicesBento onSelectService={handleSelectService} />
 
-      {/* Work Gallery: Filter Buttons, Portfolio Grid, Motion Video Embeds & Lightbox */}
-      <WorkGallery onSelectProjectForContact={handleSelectProjectForContact} />
+      {/* Work Gallery: Filter Buttons, 4-Project Limit on Home, View More Button & Lightbox */}
+      <WorkGallery
+        onSelectProjectForContact={handleSelectProjectForContact}
+        onNavigateToPortfolio={(category) => {
+          const targetUrl =
+            category && category !== 'All'
+              ? `/portfolio?category=${encodeURIComponent(category)}`
+              : '/portfolio';
+          navigateTo(targetUrl);
+        }}
+      />
 
       {/* About Me Section with Photo Placeholder & Software Stack */}
       <AboutSection />
@@ -101,6 +139,9 @@ export default function App() {
 
       {/* Client Testimonials & Endorsements */}
       <Testimonials />
+
+      {/* Frequently Asked Questions */}
+      <FAQSection />
 
       {/* Contact Section: Interactive Form + WhatsApp, Instagram, Email Buttons */}
       <ContactSection
@@ -116,4 +157,3 @@ export default function App() {
     </div>
   );
 }
-

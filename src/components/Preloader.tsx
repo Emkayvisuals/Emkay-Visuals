@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { PORTFOLIO_CONTENT } from '../data/portfolioContent';
 
 interface PreloaderProps {
   onLoadingComplete: () => void;
@@ -7,8 +8,16 @@ interface PreloaderProps {
 
 export const Preloader: React.FC<PreloaderProps> = ({ onLoadingComplete }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const { preloader } = PORTFOLIO_CONTENT;
 
   useEffect(() => {
+    // If preloader is disabled via admin settings
+    if (preloader?.enabled === false) {
+      setIsLoading(false);
+      onLoadingComplete();
+      return;
+    }
+
     // Check prefers-reduced-motion
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) {
@@ -24,7 +33,16 @@ export const Preloader: React.FC<PreloaderProps> = ({ onLoadingComplete }) => {
     }, 1300);
 
     return () => clearTimeout(timer);
-  }, [onLoadingComplete]);
+  }, [onLoadingComplete, preloader?.enabled]);
+
+  if (preloader?.enabled === false) {
+    return null;
+  }
+
+  const logoAbbr = preloader?.logoAbbr || 'EV';
+  const brandMain = preloader?.brandMain || 'EMKAY';
+  const divider = preloader?.divider || '//';
+  const brandAccent = preloader?.brandAccent || 'VISUALS';
 
   return (
     <AnimatePresence>
@@ -46,13 +64,18 @@ export const Preloader: React.FC<PreloaderProps> = ({ onLoadingComplete }) => {
               className="flex flex-col items-center gap-3 relative z-10"
             >
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#D0FF00] flex items-center justify-center font-bold text-[#050505] text-xl sm:text-2xl shadow-[0_0_30px_rgba(208,255,0,0.5)]">
-                EV
+                {logoAbbr}
               </div>
               <div className="flex items-center gap-1.5 font-montserrat font-semibold tracking-wider text-sm sm:text-base text-[#FEFFFC]">
-                <span>EMKAY</span>
-                <span className="text-[#D0FF00]">//</span>
-                <span className="text-white/70">VISUALS</span>
+                <span>{brandMain}</span>
+                <span className="text-[#D0FF00]">{divider}</span>
+                <span className="text-white/70">{brandAccent}</span>
               </div>
+              {preloader?.tagline && (
+                <span className="text-[10px] font-mono tracking-widest text-[#D0FF00]/80 mt-1">
+                  {preloader.tagline}
+                </span>
+              )}
             </motion.div>
           </div>
         </motion.div>

@@ -3,31 +3,33 @@
  * EMKAY VISUALS - MASTER CONTENT CONFIGURATION FILE
  * ============================================================================
  */
+import { doc, getDoc, setDoc, deleteDoc, onSnapshot, Unsubscribe } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { useState, useEffect } from "react";
 
 export const WEB3FORMS_ACCESS_KEY = "YOUR_WEB3FORMS_ACCESS_KEY_HERE";
+
+export interface ProjectGalleryImage {
+  url: string;
+  alt?: string;
+}
 
 export interface ProjectItem {
   id: string;
   title: string;
-  category:
-    | 'Sports Design'
-    | 'Posters'
-    | 'Flyers'
-    | 'Visual Branding'
-    | 'Movie Posters'
-    | 'Music Covers'
-    | 'Thumbnails'
-    | 'Photo Manipulation'
-    | 'Motion';
+  category: string;
   image: string;
+  imageAlt?: string;
   description: string;
   client?: string;
   year: string;
-  tools: string[];
+  tools?: string[];
   featured?: boolean;
   aspectRatio?: 'portrait' | 'landscape' | 'square';
   videoUrl?: string;
   videoEmbedType?: 'youtube' | 'vimeo' | 'mp4';
+  extraImages?: ProjectGalleryImage[];
+  visible?: boolean;
 }
 
 export interface ServiceItem {
@@ -40,6 +42,8 @@ export interface ServiceItem {
   deliverables: string[];
   colSpan?: string;
   previewImage?: string;
+  previewImageAlt?: string;
+  visible?: boolean;
 }
 
 export interface ProcessStep {
@@ -48,6 +52,7 @@ export interface ProcessStep {
   description: string;
   duration: string;
   highlightBadge: string;
+  visible?: boolean;
 }
 
 export interface TestimonialItem {
@@ -56,15 +61,83 @@ export interface TestimonialItem {
   role: string;
   company: string;
   avatar: string;
+  avatarAlt?: string;
   comment: string;
   projectType: string;
   rating: number;
+  visible?: boolean;
+}
+
+export interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+  visible?: boolean;
+}
+
+export interface HighlightItem {
+  number: string;
+  title: string;
+  text: string;
+  visible?: boolean;
+}
+
+export interface SoftwareToolItem {
+  name: string;
+  level: string;
+  type: string;
+  visible?: boolean;
+}
+
+export interface FloatingTagItem {
+  label: string;
+  color: 'yellow' | 'violet' | 'white';
+  visible?: boolean;
+}
+
+export interface NavLinkItem {
+  label: string;
+  href: string;
+  visible?: boolean;
+}
+
+export interface StatItem {
+  value: number;
+  suffix: string;
+  label: string;
+  sublabel: string;
+  visible?: boolean;
 }
 
 export interface InstagramProfile {
   handle: string;
   label: string;
   url: string;
+}
+
+export type SocialPlatform =
+  | 'WhatsApp'
+  | 'Instagram'
+  | 'YouTube'
+  | 'X/Twitter'
+  | 'LinkedIn'
+  | 'Behance'
+  | 'Dribbble'
+  | 'TikTok'
+  | 'Facebook'
+  | 'Telegram'
+  | 'Pinterest'
+  | 'Email'
+  | 'Website'
+  | 'Custom';
+
+export interface SocialLinkItem {
+  id: string;
+  platform: SocialPlatform;
+  label: string;
+  value: string;
+  description?: string;
+  visible?: boolean;
 }
 
 export interface SocialLinks {
@@ -79,16 +152,34 @@ export interface SocialLinks {
   dribbble?: string;
   youtube?: string;
   vimeo?: string;
+  links: SocialLinkItem[];
 }
 
-export const PORTFOLIO_CONTENT = {
+export const DEFAULT_PORTFOLIO_CONTENT = {
   // ==========================================
   // 0. SEO & META TAGS
   // ==========================================
   seo: {
     metaTitle: 'Emkay Visuals – Graphic Designer & Motion Graphics Artist',
-    metaDescription: 'High-end, futuristic portfolio for Emkay Visuals – Graphic Designer & Motion Graphics Artist with 5+ years of experience in Posters, Visual Branding, Movie Art, Thumbnails & Motion Graphics.',
+    metaDescription:
+      'High-end, futuristic portfolio for Emkay Visuals – Graphic Designer & Motion Graphics Artist with 5+ years of experience in Posters, Visual Branding, Movie Art, Thumbnails & Motion Graphics.',
     ogImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
+    ogImageAlt: 'Emkay Visuals – Graphic Design & Motion Art Portfolio Banner',
+    faviconUrl: '/favicon.ico',
+  },
+
+  // ==========================================
+  // 0.1 PRELOADER / CURTAIN LOADER
+  // ==========================================
+  preloader: {
+    enabled: true,
+    logoAbbr: 'EV',
+    logoUrl: '',
+    logoAlt: 'Emkay Visuals Monogram',
+    brandMain: 'EMKAY',
+    divider: '//',
+    brandAccent: 'VISUALS',
+    tagline: 'PORTFOLIO 2026',
   },
 
   // ==========================================
@@ -101,6 +192,9 @@ export const PORTFOLIO_CONTENT = {
     tagline: 'Futuristic visual architecture, cinematic key art, and high-octane motion graphics.',
     statusBadge: 'Available for Freelance & Contracts',
     location: 'Available Worldwide / Remote',
+    logoUrl: '',
+    logoAlt: 'Emkay Visuals Emblem Logo',
+    faviconUrl: '/favicon.ico',
   },
 
   // ==========================================
@@ -114,36 +208,101 @@ export const PORTFOLIO_CONTENT = {
     whatsappUrl: 'https://wa.me/2349161889909',
     instagramDesigns: {
       handle: '@emkayvisuals',
-      label: 'Graphic & Motion Designs',
+      label: 'Graphic and motion designs',
       url: 'https://instagram.com/emkayvisuals',
     },
     instagramFx: {
       handle: '@emkayvisuals_fx',
-      label: 'Digital Art & Photo Manipulations',
+      label: 'Digital art and photo manipulations',
       url: 'https://instagram.com/emkayvisuals_fx',
     },
     behance: 'https://behance.net/emkayvisuals',
     dribbble: 'https://dribbble.com/emkayvisuals',
     youtube: 'https://youtube.com',
     vimeo: 'https://vimeo.com',
+    links: [
+      {
+        id: 'link-whatsapp',
+        platform: 'WhatsApp',
+        label: 'WhatsApp Direct',
+        value: '09161889909',
+        description: 'Instant project chat & quotes',
+        visible: true,
+      },
+      {
+        id: 'link-ig-main',
+        platform: 'Instagram',
+        label: 'Instagram (Main)',
+        value: '@emkayvisuals',
+        description: 'Graphic and motion designs',
+        visible: true,
+      },
+      {
+        id: 'link-ig-fx',
+        platform: 'Instagram',
+        label: 'Instagram (FX & Art)',
+        value: '@emkayvisuals_fx',
+        description: 'Digital art and photo manipulations',
+        visible: true,
+      },
+      {
+        id: 'link-email',
+        platform: 'Email',
+        label: 'Direct Email',
+        value: 'emkayvisuals@gmail.com',
+        description: 'emkayvisuals@gmail.com',
+        visible: true,
+      },
+      {
+        id: 'link-behance',
+        platform: 'Behance',
+        label: 'Behance',
+        value: 'https://behance.net/emkayvisuals',
+        description: 'Full portfolio & case studies',
+        visible: true,
+      },
+      {
+        id: 'link-dribbble',
+        platform: 'Dribbble',
+        label: 'Dribbble',
+        value: 'https://dribbble.com/emkayvisuals',
+        description: 'Visual explorations & shots',
+        visible: true,
+      },
+    ] as SocialLinkItem[],
   } as SocialLinks,
 
   // ==========================================
-  // 3. NAVIGATION ITEMS
+  // 3. NAVBAR & NAVIGATION
   // ==========================================
+  navbar: {
+    enabled: true,
+    logoAbbr: 'EV',
+    logoUrl: '',
+    logoAlt: 'Emkay Visuals Brand Mark',
+    brandName: 'Emkay',
+    brandDivider: '//',
+    brandAccent: 'Visuals',
+    ctaText: 'Hire Me',
+    ctaLink: '#contact',
+    mobileMenuTitle: 'Portfolio Menu',
+    mobileCtaText: 'Start a Project / Hire Me',
+  },
+
   navigation: [
-    { label: 'Home', href: '#home' },
-    { label: 'Services', href: '#services' },
-    { label: 'Work', href: '#work' },
-    { label: 'About', href: '#about' },
-    { label: 'Process', href: '#process' },
-    { label: 'Contact', href: '#contact' },
-  ],
+    { label: 'Home', href: '#home', visible: true },
+    { label: 'Services', href: '#services', visible: true },
+    { label: 'Work', href: '#work', visible: true },
+    { label: 'About', href: '#about', visible: true },
+    { label: 'Process', href: '#process', visible: true },
+    { label: 'Contact', href: '#contact', visible: true },
+  ] as NavLinkItem[],
 
   // ==========================================
   // 4. HERO SECTION
   // ==========================================
   hero: {
+    enabled: true,
     badgeMain: '5+ Years of',
     badgeAccent: 'Obsessive Visual Craft',
     headingMain: 'Your',
@@ -154,13 +313,15 @@ export const PORTFOLIO_CONTENT = {
     primaryButtonLink: '#work',
     secondaryButtonText: 'Hire Me',
     secondaryButtonLink: '#contact',
+    imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1600&q=80',
+    imageAlt: 'Emkay Visuals – Futuristic Digital Key Art & Poster Direction',
     floatingTags: [
-      { label: 'Posters', color: 'yellow' },
-      { label: 'Visual Branding', color: 'violet' },
-      { label: 'Motion Graphics', color: 'yellow' },
-      { label: 'Movie Key Art', color: 'white' },
-      { label: 'Photo Manipulation', color: 'violet' },
-    ],
+      { label: 'Posters', color: 'yellow', visible: true },
+      { label: 'Visual Branding', color: 'violet', visible: true },
+      { label: 'Motion Graphics', color: 'yellow', visible: true },
+      { label: 'Movie Key Art', color: 'white', visible: true },
+      { label: 'Photo Manipulation', color: 'violet', visible: true },
+    ] as FloatingTagItem[],
     marqueeTicker: [
       'Posters',
       'Visual Branding',
@@ -176,82 +337,66 @@ export const PORTFOLIO_CONTENT = {
   },
 
   // ==========================================
-  // 4.1 SERVICES SECTION HEADER
+  // 4.1 MARQUEE SECTION
   // ==========================================
-  servicesSection: {
-    badgeMain: 'Disciplines &',
-    badgeAccent: 'Offerings',
-    headingMain: 'Specialized Creative',
-    headingAccent: 'Services',
-    subtext: 'From full theatrical key art packages to high-octane 4K motion graphics, I construct daring visual narratives that resonate with high-discerning audiences.',
-  },
-
-  // ==========================================
-  // 4.2 PROJECTS / ARCHIVE SECTION HEADER
-  // ==========================================
-  projectsSection: {
-    badgeMain: 'Selected',
-    badgeAccent: 'Archive',
-    headingMain: 'Featured Design',
-    headingAccent: 'Portfolio',
-    subtext: 'Filter through 5+ years of commissioned artworks, sports graphics, theatrical movie key art, and visual identities. Click any piece to inspect in full detail.',
-  },
-
-  // ==========================================
-  // 4.3 PROCESS SECTION HEADER
-  // ==========================================
-  processSection: {
-    badgeMain: 'Methodology //',
-    badgeAccent: 'Zero Noise',
-    headingMain: 'A Rigorous 4-Step',
-    headingAccent: 'Creative Roadmap',
-    subtext: 'Every project moves through an airtight, predictable progression ensuring full creative alignment and pristine execution without unnecessary delays.',
-  },
-
-  // ==========================================
-  // 4.4 TESTIMONIALS SECTION HEADER
-  // ==========================================
-  testimonialsSection: {
-    badgeMain: 'Endorsements &',
-    badgeAccent: 'Reputation',
-    headingMain: 'Trusted by Visionary',
-    headingAccent: 'Directors & Founders',
-    satisfactionText: '5.0 Average Client Satisfaction',
+  marqueeSection: {
+    enabled: true,
   },
 
   // ==========================================
   // 5. STATS ROW
   // ==========================================
+  statsSection: {
+    enabled: true,
+    satisfactionText: '5.0 Average Client Satisfaction',
+  },
+
   stats: [
     {
       value: 5,
       suffix: '+',
       label: 'Years Experience',
       sublabel: 'Delivering cutting-edge visual craft since 2021',
+      visible: true,
     },
     {
       value: 350,
       suffix: '+',
       label: 'Projects Completed',
       sublabel: 'Album art, key art, brand systems & animations',
+      visible: true,
     },
     {
       value: 150,
       suffix: '+',
       label: 'Happy Clients',
       sublabel: 'Musicians, film directors, creators & founders',
+      visible: true,
     },
     {
       value: 97,
       suffix: '%',
       label: 'Client Satisfaction',
       sublabel: 'On-time delivery with uncompromising polish',
+      visible: true,
     },
-  ],
+  ] as StatItem[],
 
   // ==========================================
   // 6. SERVICES (BENTO GRID)
   // ==========================================
+  servicesSection: {
+    enabled: true,
+    badgeMain: 'Disciplines &',
+    badgeAccent: 'Offerings',
+    headingMain: 'Specialized Creative',
+    headingAccent: 'Services',
+    subtext:
+      'From full theatrical key art packages to high-octane 4K motion graphics, I construct daring visual narratives that resonate with high-discerning audiences.',
+    cardButtonText: 'Request Quote',
+    refPrefix: 'Ref //',
+  },
+
   services: [
     {
       id: 'motion-graphics',
@@ -264,6 +409,7 @@ export const PORTFOLIO_CONTENT = {
       deliverables: ['Logo Reveals & Intros', 'Stage Visuals & Loops', 'Audio Visualizers', 'Social Reels & Teasers'],
       colSpan: 'col-span-12 lg:col-span-8',
       previewImage: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80',
+      visible: true,
     },
     {
       id: 'movie-posters',
@@ -276,6 +422,7 @@ export const PORTFOLIO_CONTENT = {
       deliverables: ['Theatrical One-Sheets', 'IMDb / Streaming Art', 'Festival Promo Kits', 'High-Res Print Masters'],
       colSpan: 'col-span-12 lg:col-span-4',
       previewImage: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=800&q=80',
+      visible: true,
     },
     {
       id: 'posters',
@@ -288,6 +435,7 @@ export const PORTFOLIO_CONTENT = {
       deliverables: ['Exhibition Posters', 'Limited Merch Prints', 'Event Key Graphics', 'Ultra-DPI Vector Files'],
       colSpan: 'col-span-12 sm:col-span-6 lg:col-span-4',
       previewImage: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=800&q=80',
+      visible: true,
     },
     {
       id: 'visual-branding',
@@ -300,6 +448,7 @@ export const PORTFOLIO_CONTENT = {
       deliverables: ['Logomark & Monogram', 'Color & Type Systems', 'Brand Guidelines Bible', 'Social Media Toolkits'],
       colSpan: 'col-span-12 sm:col-span-6 lg:col-span-4',
       previewImage: 'https://images.unsplash.com/photo-1600132806370-bf17e65e942f?auto=format&fit=crop&w=800&q=80',
+      visible: true,
     },
     {
       id: 'music-covers',
@@ -312,6 +461,7 @@ export const PORTFOLIO_CONTENT = {
       deliverables: ['Streaming Cover Art (3000x3000px)', 'Spotify Canvas Animations', 'Gatefold Vinyl Layouts', 'Promotional Tour Assets'],
       colSpan: 'col-span-12 sm:col-span-6 lg:col-span-4',
       previewImage: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80',
+      visible: true,
     },
     {
       id: 'photo-manipulation',
@@ -324,6 +474,7 @@ export const PORTFOLIO_CONTENT = {
       deliverables: ['Concept Art Mattes', 'Subject Retouching & FX', 'Cyberpunk Composites', 'Multi-Layer PSD Source'],
       colSpan: 'col-span-12 sm:col-span-6 lg:col-span-4',
       previewImage: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
+      visible: true,
     },
     {
       id: 'flyers',
@@ -336,6 +487,7 @@ export const PORTFOLIO_CONTENT = {
       deliverables: ['Animated Motion Flyers', 'Print Ready CMYK PDFs', 'Story / 9:16 Aspect Formats', 'Square 1:1 Social Formats'],
       colSpan: 'col-span-12 sm:col-span-6 lg:col-span-4',
       previewImage: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80',
+      visible: true,
     },
     {
       id: 'thumbnail-design',
@@ -348,15 +500,33 @@ export const PORTFOLIO_CONTENT = {
       deliverables: ['A/B Testing Variants', 'Custom Cutouts & Highlights', 'Typography Badges', 'Ultra-Crisp 1080p Exports'],
       colSpan: 'col-span-12 sm:col-span-6 lg:col-span-4',
       previewImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
+      visible: true,
     },
   ] as ServiceItem[],
 
   // ==========================================
   // 7. PORTFOLIO WORK ITEMS & CATEGORIES
   // ==========================================
+  projectsSection: {
+    enabled: true,
+    badgeMain: 'Selected',
+    badgeAccent: 'Archive',
+    headingMain: 'Featured Design',
+    headingAccent: 'Portfolio',
+    subtext:
+      'Filter through 5+ years of commissioned artworks, sports graphics, theatrical movie key art, and visual identities. Click any piece to inspect in full detail.',
+    filterLabel: 'Filter:',
+    clientLabel: 'Client:',
+    viewProjectText: 'View Project',
+    viewMoreButtonText: 'View More Projects',
+    videoEmbedBadge: 'Motion Reel',
+    toolsLabel: 'Software & Tools Used',
+    inquireProjectButtonText: 'Inquire Similar Project',
+    lightboxHint: 'Use arrow keys ← → to browse works',
+  },
+
   categories: [
     'All',
-    'Sports Design',
     'Posters',
     'Flyers',
     'Visual Branding',
@@ -364,9 +534,27 @@ export const PORTFOLIO_CONTENT = {
     'Music Covers',
     'Thumbnails',
     'Photo Manipulation',
-  ] as const,
+    'Sports Design',
+    'Motion Graphics',
+  ] as string[],
 
   projects: [
+    {
+      id: 'proj-motion-1',
+      title: 'Neon Odyssey // 3D Kinetic Brand Reveal',
+      category: 'Motion Graphics',
+      image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1200&q=80',
+      description:
+        'High-energy 3D kinetic brand sequence engineered with Cinema 4D, Octane Render, and After Effects. Featuring sound-reactive visualizers, camera tracking, and metallic fluid reflections.',
+      client: 'Hyperion Interactive',
+      year: '2025',
+      tools: ['After Effects', 'Cinema 4D', 'Octane Render', 'Premiere Pro'],
+      aspectRatio: 'landscape',
+      featured: true,
+      visible: true,
+      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      videoEmbedType: 'youtube',
+    },
     {
       id: 'proj-sports-1',
       title: 'Apex Championship // Game Day Key Art',
@@ -379,32 +567,7 @@ export const PORTFOLIO_CONTENT = {
       tools: ['Photoshop', 'Illustrator', 'Camera Raw'],
       aspectRatio: 'portrait',
       featured: true,
-    },
-    {
-      id: 'proj-sports-2',
-      title: 'Courtside Dynasty // Signature Athlete Poster',
-      category: 'Sports Design',
-      image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1200&q=80',
-      description:
-        'Cinematic pro basketball poster featuring volumetric stadium smoke, motion blur dynamics, high-contrast rim lighting, and distressed team typography.',
-      client: 'Vanguard Hoops Pro',
-      year: '2025',
-      tools: ['Photoshop', 'Lightroom', 'Illustrator'],
-      aspectRatio: 'portrait',
-      featured: true,
-    },
-    {
-      id: 'proj-sports-3',
-      title: 'Velocity Grand Prix // Motorsport Athlete Banner',
-      category: 'Sports Design',
-      image: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80',
-      description:
-        'Ultra-fast racing driver promotional artwork with particle sparks, aerodynamic motion trails, sleek carbon fiber textures, and futuristic speed typography.',
-      client: 'Monza Velocity Circuit',
-      year: '2024',
-      tools: ['Photoshop', 'Illustrator'],
-      aspectRatio: 'landscape',
-      featured: false,
+      visible: true,
     },
     {
       id: 'proj-1',
@@ -418,6 +581,7 @@ export const PORTFOLIO_CONTENT = {
       tools: ['Photoshop', 'Illustrator', 'Lightroom', 'Topaz Gigapixel'],
       aspectRatio: 'portrait',
       featured: true,
+      visible: true,
     },
     {
       id: 'proj-3',
@@ -431,6 +595,51 @@ export const PORTFOLIO_CONTENT = {
       tools: ['Photoshop', 'Illustrator', 'Lightroom'],
       aspectRatio: 'square',
       featured: true,
+      visible: true,
+    },
+    {
+      id: 'proj-motion-2',
+      title: 'Pulse Distortion // Audio-Reactive Title Loop',
+      category: 'Motion Graphics',
+      image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80',
+      description:
+        'Hypnotic visual loop for festival stage LED walls, calibrated with glitch displacement, neon scanlines, and 60 FPS buttery smooth transitions.',
+      client: 'Sub-Zero Festival',
+      year: '2025',
+      tools: ['After Effects', 'Blender', 'Photoshop'],
+      aspectRatio: 'landscape',
+      featured: true,
+      visible: true,
+      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      videoEmbedType: 'youtube',
+    },
+    {
+      id: 'proj-sports-2',
+      title: 'Courtside Dynasty // Signature Athlete Poster',
+      category: 'Sports Design',
+      image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1200&q=80',
+      description:
+        'Cinematic pro basketball poster featuring volumetric stadium smoke, motion blur dynamics, high-contrast rim lighting, and distressed team typography.',
+      client: 'Vanguard Hoops Pro',
+      year: '2025',
+      tools: ['Photoshop', 'Lightroom', 'Illustrator'],
+      aspectRatio: 'portrait',
+      featured: true,
+      visible: true,
+    },
+    {
+      id: 'proj-sports-3',
+      title: 'Velocity Grand Prix // Motorsport Athlete Banner',
+      category: 'Sports Design',
+      image: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=1200&q=80',
+      description:
+        'Ultra-fast racing driver promotional artwork with particle sparks, aerodynamic motion trails, sleek carbon fiber textures, and futuristic speed typography.',
+      client: 'Monza Velocity Circuit',
+      year: '2024',
+      tools: ['Photoshop', 'Illustrator'],
+      aspectRatio: 'landscape',
+      featured: false,
+      visible: true,
     },
     {
       id: 'proj-4',
@@ -444,6 +653,7 @@ export const PORTFOLIO_CONTENT = {
       tools: ['Illustrator', 'Photoshop'],
       aspectRatio: 'portrait',
       featured: false,
+      visible: true,
     },
     {
       id: 'proj-5',
@@ -457,6 +667,7 @@ export const PORTFOLIO_CONTENT = {
       tools: ['Photoshop', 'Illustrator', 'Lightroom'],
       aspectRatio: 'portrait',
       featured: true,
+      visible: true,
     },
     {
       id: 'proj-7',
@@ -470,6 +681,7 @@ export const PORTFOLIO_CONTENT = {
       tools: ['Illustrator', 'Figma', 'Photoshop'],
       aspectRatio: 'square',
       featured: false,
+      visible: true,
     },
     {
       id: 'proj-8',
@@ -483,6 +695,7 @@ export const PORTFOLIO_CONTENT = {
       tools: ['Photoshop', 'Illustrator'],
       aspectRatio: 'portrait',
       featured: false,
+      visible: true,
     },
     {
       id: 'proj-9',
@@ -496,6 +709,7 @@ export const PORTFOLIO_CONTENT = {
       tools: ['Photoshop', 'Illustrator', 'Lightroom'],
       aspectRatio: 'landscape',
       featured: false,
+      visible: true,
     },
     {
       id: 'proj-10',
@@ -509,6 +723,7 @@ export const PORTFOLIO_CONTENT = {
       tools: ['Photoshop', 'Illustrator'],
       aspectRatio: 'portrait',
       featured: false,
+      visible: true,
     },
     {
       id: 'proj-11',
@@ -522,6 +737,7 @@ export const PORTFOLIO_CONTENT = {
       tools: ['Photoshop', 'Illustrator', 'Lightroom'],
       aspectRatio: 'portrait',
       featured: false,
+      visible: true,
     },
     {
       id: 'proj-12',
@@ -535,6 +751,7 @@ export const PORTFOLIO_CONTENT = {
       tools: ['Photoshop', 'Illustrator'],
       aspectRatio: 'square',
       featured: false,
+      visible: true,
     },
   ] as ProjectItem[],
 
@@ -542,6 +759,7 @@ export const PORTFOLIO_CONTENT = {
   // 8. ABOUT ME SECTION
   // ==========================================
   about: {
+    enabled: true,
     badgeMain: 'Behind the',
     badgeAccent: 'Screen',
     headingMain: 'Engineering Visual Worlds with Uncompromising',
@@ -551,31 +769,58 @@ export const PORTFOLIO_CONTENT = {
       "My work combines strong composition, cinematic imagery, bold typography, and detailed visual effects to create designs that feel dynamic, polished, and built to stand out.",
       "From sports posters and campaign visuals to digital artwork and social media content, I focus on turning ideas into visuals that communicate clearly and leave a lasting impression.",
     ],
-    // Easy to swap: replace '/Images/emkay.webp' with your photo URL or image path when ready
     photoUrl: '/Images/emkay.webp',
     photoAlt: 'Emkay - Graphic Designer & Digital Artist',
-    experienceBadge: '5+ Years in Industry',
-    
-    // Core Tools Stack (strictly no 3D software):
+    artistIdPhotoUrl: '/Images/emkay.webp',
+    artistIdPhotoAlt: 'Artist ID Hologram & Signature Emblem - Emkay',
+    artistIdLabel: 'Artist ID // 2026.ev',
+    experienceBadge: '5+ Yrs Pro',
+    statusCoordinates: ['Worldwide / Remote', 'Status: Active', '60 FPS Ready'],
+    toolkitLabel: 'Production Software & Toolkit',
     softwareTools: [
-      { name: 'Adobe After Effects', level: 'Mastery', type: 'Motion Graphics & FX' },
-      { name: 'Adobe Photoshop', level: 'Mastery', type: 'Compositing & Retouch' },
-      { name: 'Adobe Illustrator', level: 'Mastery', type: 'Vector & Typography' },
-      { name: 'Adobe Premiere Pro', level: 'Advanced', type: 'Video Editing & Pacing' },
-      { name: 'Adobe Lightroom', level: 'Advanced', type: 'Color Grading & Tone' },
-      { name: 'Figma', level: 'Advanced', type: 'Brand Systems & Layout' },
-    ],
-
+      { name: 'Adobe After Effects', level: 'Mastery', type: 'Motion Graphics & FX', visible: true },
+      { name: 'Adobe Photoshop', level: 'Mastery', type: 'Compositing & Retouch', visible: true },
+      { name: 'Adobe Illustrator', level: 'Mastery', type: 'Vector & Typography', visible: true },
+      { name: 'Adobe Premiere Pro', level: 'Advanced', type: 'Video Editing & Pacing', visible: true },
+      { name: 'Adobe Lightroom', level: 'Advanced', type: 'Color Grading & Tone', visible: true },
+      { name: 'Figma', level: 'Advanced', type: 'Brand Systems & Layout', visible: true },
+    ] as SoftwareToolItem[],
     highlights: [
-      { number: '01', title: 'Obsessive Detail', text: 'Pixel-perfect alignment, custom typography modifications, and pristine color grading.' },
-      { number: '02', title: 'Cinema & Sound Synced', text: 'Visuals tuned to musical rhythm and storytelling arcs that evoke visceral emotion.' },
-      { number: '03', title: 'High-Turnaround Velocity', text: 'Fast communication with zero fluff—transparent milestones and tight deadlines honored.' },
-    ],
+      {
+        number: '01',
+        title: 'Obsessive Detail',
+        text: 'Pixel-perfect alignment, custom typography modifications, and pristine color grading.',
+        visible: true,
+      },
+      {
+        number: '02',
+        title: 'Cinema & Sound Synced',
+        text: 'Visuals tuned to musical rhythm and storytelling arcs that evoke visceral emotion.',
+        visible: true,
+      },
+      {
+        number: '03',
+        title: 'High-Turnaround Velocity',
+        text: 'Fast communication with zero fluff—transparent milestones and tight deadlines honored.',
+        visible: true,
+      },
+    ] as HighlightItem[],
   },
 
   // ==========================================
   // 9. 4-STEP CREATIVE PROCESS
   // ==========================================
+  processSection: {
+    enabled: true,
+    badgeMain: 'Methodology //',
+    badgeAccent: 'Zero Noise',
+    headingMain: 'A Rigorous 4-Step',
+    headingAccent: 'Creative Roadmap',
+    subtext:
+      'Every project moves through an airtight, predictable progression ensuring full creative alignment and pristine execution without unnecessary delays.',
+    phasePrefix: 'Phase //',
+  },
+
   process: [
     {
       stepNumber: '01',
@@ -584,6 +829,7 @@ export const PORTFOLIO_CONTENT = {
       highlightBadge: 'Research & Strategy',
       description:
         'We dissect your project objectives, target audience, artistic references, color palettes, and technical specifications to lock in an airtight creative direction.',
+      visible: true,
     },
     {
       stepNumber: '02',
@@ -592,6 +838,7 @@ export const PORTFOLIO_CONTENT = {
       highlightBadge: 'Rapid Prototyping',
       description:
         'I develop visual moodboards, composition roughs, wireframe layouts, and kinetic motion styleframes to explore diverse creative paths before final rendering.',
+      visible: true,
     },
     {
       stepNumber: '03',
@@ -600,6 +847,7 @@ export const PORTFOLIO_CONTENT = {
       highlightBadge: 'Deep Execution',
       description:
         'Full execution begins: complex photo manipulation, custom typography, advanced lighting passes, color grading, particle simulation, and frame-by-frame animation.',
+      visible: true,
     },
     {
       stepNumber: '04',
@@ -608,12 +856,22 @@ export const PORTFOLIO_CONTENT = {
       highlightBadge: 'Final Handoff',
       description:
         'We fine-tune the assets through collaborative feedback rounds, delivering master production files (DPI print masters, 4K ProRes/MP4, layered PSDs, vector SVGs).',
+      visible: true,
     },
   ] as ProcessStep[],
 
   // ==========================================
   // 10. TESTIMONIALS
   // ==========================================
+  testimonialsSection: {
+    enabled: true,
+    badgeMain: 'Endorsements &',
+    badgeAccent: 'Reputation',
+    headingMain: 'Trusted by Visionary',
+    headingAccent: 'Directors & Founders',
+    satisfactionText: '5.0 Average Client Satisfaction',
+  },
+
   testimonials: [
     {
       id: 't-1',
@@ -625,6 +883,7 @@ export const PORTFOLIO_CONTENT = {
         'Emkay designed the official key art for our festival feature film. The poster halted people in their tracks at every screening and drove our streaming debut. The level of detail in the photo manipulation was breathtaking.',
       projectType: 'Movie Poster Key Art',
       rating: 5,
+      visible: true,
     },
     {
       id: 't-2',
@@ -636,6 +895,7 @@ export const PORTFOLIO_CONTENT = {
         'Working with Emkay on my album rollout and stage visuals transformed my entire brand. The motion loops synced seamlessly with my live set. Absolute professionalism and visionary taste.',
       projectType: 'Album Art & Motion Graphics',
       rating: 5,
+      visible: true,
     },
     {
       id: 't-3',
@@ -647,6 +907,7 @@ export const PORTFOLIO_CONTENT = {
         'From our kinetic logo reveal to our dark-mode identity guidelines, Emkay understood the futuristic cyberpunk aesthetic effortlessly. Delivered on schedule with immaculate communication.',
       projectType: 'Visual Branding & Motion Graphics',
       rating: 5,
+      visible: true,
     },
     {
       id: 't-4',
@@ -658,13 +919,66 @@ export const PORTFOLIO_CONTENT = {
         'Our CTR shot up from 5.1% to nearly 14% after Emkay took over thumbnail art. The lighting mastery and typography hierarchy are completely unmatched in the creator space.',
       projectType: 'YouTube Thumbnail Design',
       rating: 5,
+      visible: true,
     },
   ] as TestimonialItem[],
 
   // ==========================================
-  // 11. CONTACT SECTION
+  // 10.1 FAQ SECTION
+  // ==========================================
+  faqSection: {
+    enabled: true,
+    badgeMain: 'Common',
+    badgeAccent: 'Queries',
+    headingMain: 'Frequently Asked',
+    headingAccent: 'Questions',
+    subtext:
+      'Everything you need to know about commissioning artwork, deliverables, timelines, and commercial licensing.',
+  },
+
+  faq: [
+    {
+      id: 'faq-1',
+      question: 'What is your typical turnaround time?',
+      answer:
+        'Turnaround depends on project scope. Single sports posters and album covers typically take 2 to 4 business days. Theatrical key art and full identity systems average 1 to 2 weeks. Expedited delivery is available upon request.',
+      visible: true,
+    },
+    {
+      id: 'faq-2',
+      question: 'What deliverables and source files do I receive?',
+      answer:
+        'You receive print-ready ultra-high resolution files (300+ DPI CMYK), RGB web masters, social media formats (1:1 and 9:16), and layered source files (PSD / AI / AEP) based on agreed commercial rights.',
+      visible: true,
+    },
+    {
+      id: 'faq-3',
+      question: 'How does the revision process work?',
+      answer:
+        'Every project includes 2 to 3 structured revision rounds following the moodboard and initial concept phase to ensure the final output aligns perfectly with your vision.',
+      visible: true,
+    },
+    {
+      id: 'faq-4',
+      question: 'What are your payment terms?',
+      answer:
+        'A 50% deposit is required to lock in the production schedule, with the remaining 50% due upon final approval prior to master asset handoff.',
+      visible: true,
+    },
+    {
+      id: 'faq-5',
+      question: 'Do you work with international clients?',
+      answer:
+        'Yes, I collaborate with directors, record labels, athletes, and creative founders worldwide across all time zones with remote digital handoffs.',
+      visible: true,
+    },
+  ] as FAQItem[],
+
+  // ==========================================
+  // 11. CONTACT SECTION & BRIEF FORM
   // ==========================================
   contact: {
+    enabled: true,
     badgeMain: "Let's",
     badgeAccent: "Collaborate",
     headingMain: 'Ready to Bring Your Vision to',
@@ -672,6 +986,22 @@ export const PORTFOLIO_CONTENT = {
     subtext:
       'Have an upcoming music release, movie key art project, brand overhaul, or motion graphics brief? Send a project brief directly or reach out on WhatsApp or Instagram.',
     responseTime: 'Typical response time: under 4 hours',
+    directChannelsHeading: 'Direct Channels',
+    whatsappCardTitle: 'Chat on WhatsApp',
+    emailCardTitle: 'Direct Email',
+    copyEmailText: 'Click to copy email',
+    copiedEmailText: 'Email copied to clipboard!',
+    formTitle: 'Project Inquiry & Commission Brief',
+    formStepBadge: 'Step 01 // Form',
+    nameLabel: 'Your Name / Company *',
+    namePlaceholder: 'e.g. Elena Rostova / Aether Records',
+    emailLabel: 'Your Email Address *',
+    emailPlaceholder: 'name@company.com',
+    deadlineLabel: 'Target Deadline / Timeline',
+    deadlinePlaceholder: 'e.g. Next 3 weeks / Flexible',
+    referenceLinkLabel: 'Reference Link / Moodboard URL (Optional)',
+    referenceLinkPlaceholder: 'https://...',
+    serviceLabel: 'Service Required',
     servicesOptions: [
       'Posters & Art Prints',
       'Club & Event Flyers',
@@ -683,77 +1013,233 @@ export const PORTFOLIO_CONTENT = {
       'Motion Graphics & Video Animation',
       'Complete Full-Package Campaign',
     ],
+    budgetLabel: 'Estimated Budget Tier (USD)',
     budgetRanges: [
+      '$50 - $500',
       '$500 - $1,000',
       '$1,000 - $2,500',
       '$2,500 - $5,000',
-      '$5,000+',
+      '$5,000 - $7,500',
+      '$7,500 - $10,000',
     ],
+    messageLabel: 'Project Vision & Deliverables *',
+    messagePlaceholder:
+      'Tell me about your release date, narrative references, dimensions, sound/theme inspirations, and key deliverables...',
+    submitButtonText: 'Send Project Brief',
+    submittingButtonText: 'Sending Project Brief...',
+    successTitle: 'Transmission Received',
+    successMessage:
+      'Thank you. Your project brief has been successfully sent to Emkay. He will review your specifications and reply within 4 hours.',
+    sendAnotherButtonText: 'Send Another Message',
+    whatsappFollowupButtonText: 'Follow up on WhatsApp',
+    whatsappFallbackNotice: 'You can also chat directly on WhatsApp right away.',
+    whatsappFallbackButtonText: 'Chat on WhatsApp',
   },
 
   // ==========================================
   // 12. FOOTER
   // ==========================================
   footer: {
+    enabled: true,
+    logoAbbr: 'EV',
+    logoUrl: '',
+    logoAlt: 'Emkay Visuals Monogram',
+    brandName: 'Emkay',
+    brandDivider: '//',
+    brandAccent: 'Visuals',
     tagline: 'Designing tomorrow’s aesthetics today. High-impact visuals & kinetic motion graphics.',
     copyright: '© 2026 Emkay Visuals. All rights reserved.',
     rightsNote: 'Handcrafted with precision. All artworks protected under creative copyright.',
+    backToTopAria: 'Scroll to Top',
+  },
+
+  // ==========================================
+  // 13. FLOATING QUICK CONTACT BAR
+  // ==========================================
+  floatingContact: {
+    enabled: true,
+    title: 'Quick Connect',
+    whatsappLabel: 'WhatsApp Direct',
+    emailLabel: 'Email Emkay',
   },
 };
 
-import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
+export type PortfolioContentType = typeof DEFAULT_PORTFOLIO_CONTENT;
 
-export type PortfolioContentType = typeof PORTFOLIO_CONTENT;
+/**
+ * Deep merge helper: Merges `source` into `target` default object so that
+ * any missing keys or empty strings fall back smoothly to the default values.
+ */
+export function deepMerge(target: any, source: any): any {
+  if (!source || typeof source !== 'object') return target;
+  if (Array.isArray(target) && Array.isArray(source)) {
+    return source.map((item, idx) => {
+      if (typeof item === 'object' && item !== null && target[idx]) {
+        return deepMerge(target[idx], item);
+      }
+      return item;
+    });
+  }
+  const result = { ...target };
+  for (const key of Object.keys(target)) {
+    if (source[key] === undefined || source[key] === null) {
+      result[key] = target[key];
+    } else if (typeof target[key] === 'object' && target[key] !== null && !Array.isArray(target[key])) {
+      result[key] = deepMerge(target[key], source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  // Include any extra source keys not in target
+  for (const key of Object.keys(source)) {
+    if (result[key] === undefined && source[key] !== undefined) {
+      result[key] = source[key];
+    }
+  }
+  return result;
+}
+
+/**
+ * Strips all `undefined` values recursively so Firestore never throws a validation error.
+ */
+export function cleanForFirestore(obj: any): any {
+  if (obj === undefined) return null;
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) {
+    return obj.map(cleanForFirestore);
+  }
+  const cleaned: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      cleaned[key] = cleanForFirestore(value);
+    }
+  }
+  return cleaned;
+}
+
+// Current singleton in-memory object initialized from default
+export const PORTFOLIO_CONTENT: PortfolioContentType = JSON.parse(
+  JSON.stringify(DEFAULT_PORTFOLIO_CONTENT)
+);
 
 let listeners: (() => void)[] = [];
+let realtimeUnsubscribe: Unsubscribe | null = null;
 
 export function subscribeToPortfolio(cb: () => void) {
   listeners.push(cb);
   return () => {
-    listeners = listeners.filter(l => l !== cb);
+    listeners = listeners.filter((l) => l !== cb);
   };
 }
 
-function notifyListeners() {
-  listeners.forEach(cb => cb());
+export function notifyListeners() {
+  listeners.forEach((cb) => {
+    try {
+      cb();
+    } catch (e) {
+      console.error('Error notifying portfolio listener:', e);
+    }
+  });
 }
 
-export async function loadPortfolioFromFirestore() {
+/**
+ * Initializes real-time synchronization with Firestore using `onSnapshot`.
+ * Falls back to local defaults gracefully if offline or document is absent.
+ */
+export function initRealtimePortfolio() {
+  if (realtimeUnsubscribe) {
+    return realtimeUnsubscribe;
+  }
   try {
-    const docRef = doc(db, "portfolio", "content");
-    const snap = await getDoc(docRef);
-    if (snap.exists()) {
-      const data = snap.data() as PortfolioContentType;
-      Object.assign(PORTFOLIO_CONTENT, data);
-      notifyListeners();
-    }
+    const docRef = doc(db, 'portfolio', 'content');
+    realtimeUnsubscribe = onSnapshot(
+      docRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const rawData = snapshot.data();
+          const merged = deepMerge(DEFAULT_PORTFOLIO_CONTENT, rawData);
+          Object.assign(PORTFOLIO_CONTENT, merged);
+          notifyListeners();
+        } else {
+          // Document does not exist yet; populate with default
+          Object.assign(PORTFOLIO_CONTENT, JSON.parse(JSON.stringify(DEFAULT_PORTFOLIO_CONTENT)));
+          notifyListeners();
+        }
+      },
+      (error) => {
+        console.warn('Real-time Firestore snapshot listener notice (using defaults):', error);
+      }
+    );
+    return realtimeUnsubscribe;
   } catch (err) {
-    console.log("Using local portfolio fallback (offline or empty):", err);
+    console.warn('Could not initialize real-time Firestore listener:', err);
+    return null;
   }
 }
 
+/**
+ * One-time load from Firestore (compatible with existing code)
+ */
+export async function loadPortfolioFromFirestore() {
+  try {
+    const docRef = doc(db, 'portfolio', 'content');
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      const merged = deepMerge(DEFAULT_PORTFOLIO_CONTENT, data);
+      Object.assign(PORTFOLIO_CONTENT, merged);
+      notifyListeners();
+    }
+  } catch (err) {
+    console.log('Using local portfolio fallback (offline or empty):', err);
+  }
+}
+
+/**
+ * Saves changes to Firestore, cleans undefined fields, and notifies listeners.
+ */
 export async function savePortfolioToFirestore(newData: PortfolioContentType) {
   try {
-    const docRef = doc(db, "portfolio", "content");
-    await setDoc(docRef, newData);
+    const docRef = doc(db, 'portfolio', 'content');
+    const cleaned = cleanForFirestore(newData);
+    await setDoc(docRef, cleaned);
     Object.assign(PORTFOLIO_CONTENT, newData);
     notifyListeners();
     return true;
   } catch (err) {
-    console.error("Error saving portfolio content:", err);
+    console.error('Error saving portfolio content to Firestore:', err);
     throw err;
   }
 }
 
+/**
+ * Resets portfolio in Firestore back to default content.
+ */
 export async function resetPortfolioToDefault() {
   try {
-    const docRef = doc(db, "portfolio", "content");
+    const docRef = doc(db, 'portfolio', 'content');
     await deleteDoc(docRef);
+    Object.assign(PORTFOLIO_CONTENT, JSON.parse(JSON.stringify(DEFAULT_PORTFOLIO_CONTENT)));
+    notifyListeners();
     window.location.reload();
   } catch (err) {
-    console.error("Error resetting portfolio:", err);
+    console.error('Error resetting portfolio:', err);
     throw err;
   }
 }
 
+/**
+ * React hook to read reactive portfolio content that updates automatically.
+ */
+export function usePortfolioContent(): PortfolioContentType {
+  const [content, setContent] = useState<PortfolioContentType>({ ...PORTFOLIO_CONTENT });
+
+  useEffect(() => {
+    const unsub = subscribeToPortfolio(() => {
+      setContent({ ...PORTFOLIO_CONTENT });
+    });
+    return unsub;
+  }, []);
+
+  return content;
+}

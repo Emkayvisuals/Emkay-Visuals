@@ -21,6 +21,22 @@ interface ServicesBentoProps {
 export const ServicesBento: React.FC<ServicesBentoProps> = ({ onSelectService }) => {
   const { services, servicesSection } = PORTFOLIO_CONTENT;
 
+  if (servicesSection?.enabled === false) {
+    return null;
+  }
+
+  const badgeMain = servicesSection?.badgeMain || 'Disciplines &';
+  const badgeAccent = servicesSection?.badgeAccent || 'Offerings';
+  const headingMain = servicesSection?.headingMain || 'Specialized Creative';
+  const headingAccent = servicesSection?.headingAccent || 'Services';
+  const subtext =
+    servicesSection?.subtext ||
+    'From full theatrical key art packages to high-octane 4K motion graphics, I construct daring visual narratives that resonate with high-discerning audiences.';
+  const cardButtonText = servicesSection?.cardButtonText || 'Request Quote';
+  const refPrefix = servicesSection?.refPrefix || 'Ref //';
+
+  const visibleServices = (services || []).filter((s) => s.visible !== false);
+
   // Icon mapping helper
   const getIcon = (name: string) => {
     switch (name) {
@@ -57,7 +73,7 @@ export const ServicesBento: React.FC<ServicesBentoProps> = ({ onSelectService })
 
   return (
     <section id="services" className="relative py-20 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
-      {/* Background Section Glows - Very subtle low-opacity accents */}
+      {/* Background Section Glows */}
       <div
         className="pointer-events-none absolute top-1/2 left-1/4 -translate-y-1/2 w-[400px] h-[400px] rounded-full blur-[160px] opacity-10"
         style={{ background: '#8116E0' }}
@@ -78,20 +94,30 @@ export const ServicesBento: React.FC<ServicesBentoProps> = ({ onSelectService })
         <div>
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-3 sm:mb-4">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>{servicesSection.badgeMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{servicesSection.badgeAccent}</span></span>
+            <span>
+              {badgeMain}{' '}
+              {badgeAccent && (
+                <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">
+                  {badgeAccent}
+                </span>
+              )}
+            </span>
           </div>
           <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight leading-[1.15]">
-            {servicesSection.headingMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{servicesSection.headingAccent}</span>
+            {headingMain}{' '}
+            <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">
+              {headingAccent}
+            </span>
           </h2>
         </div>
         <p className="max-w-md text-sm sm:text-base text-white/70 font-normal leading-relaxed">
-          {servicesSection.subtext}
+          {subtext}
         </p>
       </motion.div>
 
-      {/* Bento Grid: strictly single column on mobile, responsive bento on tablet/desktop */}
+      {/* Bento Grid */}
       <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-6">
-        {services.map((service: ServiceItem, idx: number) => {
+        {visibleServices.map((service: ServiceItem, idx: number) => {
           const colSpanClass = service.colSpan?.includes('lg:col-span-8')
             ? 'sm:col-span-2 lg:col-span-8'
             : 'sm:col-span-1 lg:col-span-4';
@@ -153,30 +179,32 @@ export const ServicesBento: React.FC<ServicesBentoProps> = ({ onSelectService })
                 </p>
 
                 {/* Deliverables tags */}
-                <div className="flex flex-wrap gap-1.5 sm:gap-2 my-2.5">
-                  {service.deliverables.map((deliv, dIdx) => (
-                    <span
-                      key={dIdx}
-                      className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-lg bg-black/50 border border-white/[0.06] text-white/80 group-hover:border-white/15 transition-colors"
-                    >
-                      <CheckCircle2 className="w-3 h-3 text-[#D0FF00] shrink-0" />
-                      <span>{deliv}</span>
-                    </span>
-                  ))}
-                </div>
+                {service.deliverables && service.deliverables.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2 my-2.5">
+                    {service.deliverables.map((deliv, dIdx) => (
+                      <span
+                        key={dIdx}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-lg bg-black/50 border border-white/[0.06] text-white/80 group-hover:border-white/15 transition-colors"
+                      >
+                        <CheckCircle2 className="w-3 h-3 text-[#D0FF00] shrink-0" />
+                        <span>{deliv}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Card Bottom: Inquire Action - 44px min tap target */}
+              {/* Card Bottom: Inquire Action */}
               <div className="relative z-10 pt-3 mt-2 border-t border-white/[0.06] flex items-center justify-between min-h-[44px]">
                 <span className="text-xs text-white/40 font-medium">
-                  Ref // <span className="font-baskervville italic text-[#FEFFFC]/70">0{idx + 1}</span>
+                  {refPrefix} <span className="font-baskervville italic text-[#FEFFFC]/70">0{idx + 1}</span>
                 </span>
                 <button
                   type="button"
                   onClick={() => handleInquire(service.title)}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-[#D0FF00] hover:text-[#FEFFFC] transition-colors py-2 px-1 cursor-pointer group/btn min-h-[44px]"
                 >
-                  <span>Request Quote</span>
+                  <span>{cardButtonText}</span>
                   <ArrowUpRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
                 </button>
               </div>
