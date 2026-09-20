@@ -54,11 +54,13 @@ export const AboutSection: React.FC = () => {
                   <img
                     src={about.photoUrl}
                     alt={about.photoAlt}
-                    className={`w-full h-full object-cover object-center ${
-                      about.photoUrl.endsWith('.svg')
-                        ? 'group-hover:scale-105'
-                        : 'grayscale contrast-115 group-hover:grayscale-0 group-hover:scale-105'
-                    } transition-all duration-700`}
+                    width="400"
+                    height="500"
+                    loading="lazy"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/artist-avatar.svg';
+                    }}
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
@@ -112,11 +114,11 @@ export const AboutSection: React.FC = () => {
         >
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-4 w-fit">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Behind the <span className="font-baskervville italic text-[#FEFFFC]">Screen</span></span>
+            <span>Behind the <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">Screen</span></span>
           </div>
 
           <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight leading-[1.15] mb-5">
-            Engineering Visual Worlds with Uncompromising <span className="font-baskervville italic text-[#FEFFFC]">Precision</span>
+            Engineering Visual Worlds with Uncompromising <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">Precision</span>
           </h2>
 
           <div className="space-y-3.5 text-sm sm:text-base text-white/75 font-normal leading-relaxed mb-8">
@@ -134,7 +136,7 @@ export const AboutSection: React.FC = () => {
                 className="p-4 rounded-2xl glass-panel border border-white/[0.07] hover:border-[#D0FF00]/40 transition-all cursor-default bg-[#050505]/70"
               >
                 <span className="text-xs font-bold text-[#D0FF00] block mb-1">
-                  // <span className="font-baskervville italic text-sm">{item.number}</span>
+                  // <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em]">{item.number}</span>
                 </span>
                 <h4 className="font-montserrat font-medium italic text-sm text-[#D0FF00] mb-1">
                   {item.title}

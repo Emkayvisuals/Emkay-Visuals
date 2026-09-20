@@ -25,7 +25,7 @@ export const Testimonials: React.FC = () => {
         <div>
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Endorsements &amp; <span className="font-baskervville italic text-[#FEFFFC]">Reputation</span></span>
+            <span>Endorsements &amp; <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">Reputation</span></span>
           </div>
           <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight leading-[1.15]">
             Trusted by Visionary Directors &amp; Founders

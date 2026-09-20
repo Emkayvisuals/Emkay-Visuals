@@ -169,22 +169,26 @@ export const PORTFOLIO_CONTENT = {
   // ==========================================
   stats: [
     {
-      value: '5+',
+      value: 5,
+      suffix: '+',
       label: 'Years Experience',
       sublabel: 'Delivering cutting-edge visual craft since 2021',
     },
     {
-      value: '350+',
+      value: 350,
+      suffix: '+',
       label: 'Projects Completed',
       sublabel: 'Album art, key art, brand systems & animations',
     },
     {
-      value: '140+',
+      value: 150,
+      suffix: '+',
       label: 'Happy Clients',
       sublabel: 'Musicians, film directors, creators & founders',
     },
     {
-      value: '99.8%',
+      value: 97,
+      suffix: '%',
       label: 'Client Satisfaction',
       sublabel: 'On-time delivery with uncompromising polish',
     },

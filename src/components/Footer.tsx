@@ -31,7 +31,7 @@ export const Footer: React.FC = () => {
                 Emkay <span className="text-[#D0FF00]">//</span> Visuals
               </span>
             </div>
-            <p className="font-baskervville italic text-xs sm:text-sm text-white/70 font-normal leading-relaxed">
+            <p className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-white/70 font-normal leading-relaxed">
               {footer.tagline}
             </p>
           </div>

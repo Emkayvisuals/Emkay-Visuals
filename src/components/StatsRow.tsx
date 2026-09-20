@@ -1,10 +1,61 @@
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { PORTFOLIO_CONTENT } from '../data/portfolioContent';
 import { Award, Briefcase, Users, Zap } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, useInView } from 'motion/react';
 
-export const StatsRow: React.FC = () => {
-  const { stats } = PORTFOLIO_CONTENT;
+interface StatCardProps {
+  value: number;
+  suffix: string;
+  label: string;
+  sublabel: string;
+  index: number;
+}
+
+const StatCounter: React.FC<StatCardProps> = ({ value, suffix, label, sublabel, index }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, amount: 0.4 });
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+      setCount(value);
+      return;
+    }
+
+    if (!isInView) return;
+
+    const delay = index * 150; // 0.15s stagger
+    const duration = 2000; // 2 seconds duration
+    let startTime: number | null = null;
+    let animationFrameId: number;
+
+    const timeout = setTimeout(() => {
+      const updateCount = (timestamp: number) => {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        
+        // Smooth cubic ease-out function
+        const easeOutProgress = 1 - Math.pow(1 - progress, 3);
+        const currentCount = Math.floor(easeOutProgress * value);
+
+        setCount(currentCount);
+
+        if (progress < 1) {
+          animationFrameId = requestAnimationFrame(updateCount);
+        } else {
+          setCount(value); // exact landing on target
+        }
+      };
+
+      animationFrameId = requestAnimationFrame(updateCount);
+    }, delay);
+
+    return () => {
+      clearTimeout(timeout);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isInView, value, index]);
 
   const icons = [
     <Award className="w-5 h-5 text-[#D0FF00] group-hover:rotate-12 transition-transform duration-300" key="award" />,
@@ -14,6 +65,54 @@ export const StatsRow: React.FC = () => {
   ];
 
   return (
+    <motion.div
+      ref={ref}
+      id={`stat-card-${index}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{
+        duration: 0.6,
+        delay: index * 0.15,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      whileHover={{
+        y: -4,
+        scale: 1.015,
+        transition: { duration: 0.2 },
+      }}
+      className="group relative rounded-2xl glass-panel p-4 sm:p-6 border border-white/[0.08] hover:border-[#D0FF00]/40 transition-all duration-300 flex flex-col justify-between overflow-hidden cursor-default bg-[#050505]/80"
+    >
+      {/* Corner Tech Notch Indicator */}
+      <div className="absolute top-0 right-0 w-7 h-7 border-t border-r border-white/10 group-hover:border-[#D0FF00]/50 transition-colors" />
+
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-semibold text-white/40 group-hover:text-[#D0FF00] tracking-wide transition-colors">
+          // <span className="font-cormorant italic font-medium text-[1.12em] text-[#FEFFFC]/70">0{index + 1}</span>
+        </span>
+        <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] group-hover:bg-[#D0FF00]/15 group-hover:border-[#D0FF00]/40 transition-all duration-300">
+          {icons[index % icons.length]}
+        </div>
+      </div>
+
+      <div>
+        <div className="font-montserrat font-medium italic text-3xl sm:text-4xl text-[#FEFFFC] tracking-tight group-hover:text-[#D0FF00] transition-colors duration-300 tabular-nums">
+          {count}{suffix}
+        </div>
+        <div className="font-montserrat font-medium text-xs sm:text-base text-[#FEFFFC]/90 mt-1">
+          {label}
+        </div>
+        <p className="text-[11px] sm:text-xs text-white/55 mt-1 leading-normal font-normal">
+          {sublabel}
+        </p>
+      </div>
+    </motion.div>
+  );
+};
+
+export const StatsRow: React.FC = () => {
+  const { stats } = PORTFOLIO_CONTENT;
+
+  return (
     <section className="relative py-14 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto overflow-hidden">
       {/* Background ambient glow - very subtle */}
       <div
@@ -21,51 +120,17 @@ export const StatsRow: React.FC = () => {
         style={{ background: 'linear-gradient(90deg, #8116E0, #D0FF00)' }}
       />
 
-      {/* Grid: single column on mobile, 2 columns on tablet, 4 on desktop */}
-      <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      {/* Grid: 2x2 on mobile, 4 on desktop */}
+      <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
         {stats.map((stat, idx) => (
-          <motion.div
+          <StatCounter
             key={stat.label}
-            id={`stat-card-${idx}`}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-30px' }}
-            transition={{
-              duration: 0.5,
-              delay: idx * 0.06,
-              ease: [0.16, 1, 0.3, 1],
-            }}
-            whileHover={{
-              y: -4,
-              scale: 1.015,
-              transition: { duration: 0.2 },
-            }}
-            className="group relative rounded-2xl glass-panel p-5 sm:p-6 border border-white/[0.08] hover:border-[#D0FF00]/40 transition-all duration-300 flex flex-col justify-between overflow-hidden cursor-default bg-[#050505]/80"
-          >
-            {/* Corner Tech Notch Indicator */}
-            <div className="absolute top-0 right-0 w-7 h-7 border-t border-r border-white/10 group-hover:border-[#D0FF00]/50 transition-colors" />
-
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-white/40 group-hover:text-[#D0FF00] tracking-wide transition-colors">
-                // <span className="font-baskervville italic text-[#FEFFFC]/70">0{idx + 1}</span>
-              </span>
-              <div className="p-2 rounded-xl bg-white/[0.04] border border-white/[0.08] group-hover:bg-[#D0FF00]/15 group-hover:border-[#D0FF00]/40 transition-all duration-300">
-                {icons[idx % icons.length]}
-              </div>
-            </div>
-
-            <div>
-              <div className="font-montserrat font-medium italic text-3xl sm:text-4xl text-[#FEFFFC] tracking-tight group-hover:text-[#D0FF00] transition-colors duration-300">
-                {stat.value}
-              </div>
-              <div className="font-montserrat font-medium text-sm sm:text-base text-[#FEFFFC]/90 mt-1">
-                {stat.label}
-              </div>
-              <p className="text-xs text-white/55 mt-1 leading-normal font-normal">
-                {stat.sublabel}
-              </p>
-            </div>
-          </motion.div>
+            value={stat.value}
+            suffix={stat.suffix}
+            label={stat.label}
+            sublabel={stat.sublabel}
+            index={idx}
+          />
         ))}
       </div>
     </section>

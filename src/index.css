@@ -41,8 +41,8 @@
     font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
-  .font-baskervville {
-    font-family: 'Baskervville', Georgia, Cambria, 'Times New Roman', Times, serif;
+  .font-cormorant {
+    font-family: 'Cormorant Garamond', Georgia, Cambria, 'Times New Roman', Times, serif;
   }
 
   /* Tech tags / mono override using Montserrat */

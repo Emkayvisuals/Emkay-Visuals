@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Preloader } from './components/Preloader';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Marquee } from './components/Marquee';
@@ -26,6 +27,9 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen bg-[#050505] text-[#FEFFFC] selection:bg-[#D0FF00] selection:text-[#050505] overflow-x-hidden w-full">
+      {/* Curtain Preloader on first load */}
+      <Preloader onLoadingComplete={() => {}} />
+
       {/* Floating Pill Navigation Bar */}
       <Navbar />
 

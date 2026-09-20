@@ -1,30 +1,41 @@
 import React from 'react';
 import { PORTFOLIO_CONTENT } from '../data/portfolioContent';
 import { ArrowDown, Sparkles, Film, Palette, Layers, Eye } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, useScroll, useTransform } from 'motion/react';
 
 export const Hero: React.FC = () => {
   const { hero, brand } = PORTFOLIO_CONTENT;
+  const { scrollY } = useScroll();
+  const glowY1 = useTransform(scrollY, [0, 800], [0, 100]);
+  const glowY2 = useTransform(scrollY, [0, 800], [0, -80]);
+  const glowY3 = useTransform(scrollY, [0, 800], [0, 120]);
 
   return (
     <section
       id="home"
       className="relative min-h-[92vh] flex items-center justify-center pt-28 sm:pt-32 pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden bg-[#050505]"
     >
-      {/* Soft Blurred Background Glows - Very subtle, low-opacity accents */}
-      <div
-        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[90vw] max-w-[700px] h-[350px] sm:h-[450px] rounded-full blur-[140px] opacity-15"
+      {/* Soft Blurred Background Glows with subtle parallax movement */}
+      <motion.div
         style={{
+          y: glowY1,
           background: 'radial-gradient(circle, #8116E0 20%, #D0FF00 90%)',
         }}
+        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[90vw] max-w-[700px] h-[350px] sm:h-[450px] rounded-full blur-[140px] opacity-15"
       />
-      <div
+      <motion.div
+        style={{
+          y: glowY2,
+          background: '#8116E0',
+        }}
         className="pointer-events-none absolute top-1/3 -left-32 w-[300px] sm:w-[400px] h-[300px] sm:h-[400px] rounded-full blur-[130px] opacity-10"
-        style={{ background: '#8116E0' }}
       />
-      <div
+      <motion.div
+        style={{
+          y: glowY3,
+          background: '#D0FF00',
+        }}
         className="pointer-events-none absolute bottom-10 -right-32 w-[320px] sm:w-[420px] h-[320px] sm:h-[420px] rounded-full blur-[130px] opacity-08"
-        style={{ background: '#D0FF00' }}
       />
 
       <div className="relative z-10 w-full max-w-4xl mx-auto text-center flex flex-col items-center">
@@ -57,8 +68,8 @@ export const Hero: React.FC = () => {
           className="font-montserrat font-medium not-italic text-[clamp(2.2rem,7.2vw,5.5rem)] tracking-tight leading-[1.12] max-w-4xl px-2 break-words"
           style={{ fontStyle: 'normal' }}
         >
-          <span className="text-[#D0FF00]">Your </span>
-          <span className="text-[#FEFFFC]">Vision, Visualized</span>
+          <span className="font-cormorant italic font-medium sm:font-semibold text-[#D0FF00] text-[1.12em]">Your </span>
+          <span className="font-montserrat font-medium text-[#FEFFFC]">Vision, Visualized</span>
         </motion.h1>
 
         {/* Short Subtext with Montserrat Regular, italic */}

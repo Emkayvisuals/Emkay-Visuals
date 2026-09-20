@@ -180,11 +180,11 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           <div>
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-3 sm:mb-4">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Let's <span className="font-baskervville italic text-[#FEFFFC]">Collaborate</span></span>
+              <span>Let's <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">Collaborate</span></span>
             </div>
 
             <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight leading-[1.15] mb-3 sm:mb-4">
-              Ready to Bring Your Vision to <span className="font-baskervville italic text-[#FEFFFC]">Life?</span>
+              Ready to Bring Your Vision to <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">Life?</span>
             </h2>
 
             <p className="text-sm sm:text-base text-white/70 font-normal leading-relaxed mb-6 sm:mb-8">

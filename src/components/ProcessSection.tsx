@@ -24,7 +24,7 @@ export const ProcessSection: React.FC = () => {
       >
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-3">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Methodology // <span className="font-baskervville italic text-[#FEFFFC]">Zero Noise</span></span>
+          <span>Methodology // <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">Zero Noise</span></span>
         </div>
         <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight">
           A Rigorous 4-Step Creative Roadmap
@@ -59,7 +59,7 @@ export const ProcessSection: React.FC = () => {
             {/* Top Step Number & Duration */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <span className="font-baskervville italic text-3xl sm:text-4xl text-[#FEFFFC]/30 group-hover:text-[#D0FF00] group-hover:scale-105 transition-all duration-300 inline-block">
+                <span className="font-cormorant italic font-medium text-3xl sm:text-4xl text-[#FEFFFC]/30 group-hover:text-[#D0FF00] group-hover:scale-105 transition-all duration-300 inline-block">
                   {step.stepNumber}
                 </span>
                 <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10 text-white/60 group-hover:border-[#D0FF00]/30 transition-colors">
@@ -83,7 +83,7 @@ export const ProcessSection: React.FC = () => {
 
             {/* Bottom Step Indicator */}
             <div className="mt-5 pt-3.5 border-t border-white/[0.06] flex items-center justify-between text-xs text-white/45 font-medium">
-              <span>Phase // <span className="font-baskervville italic text-[#FEFFFC]/60">0{idx + 1}</span></span>
+              <span>Phase // <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]/60">0{idx + 1}</span></span>
               <span className="w-2 h-2 rounded-full bg-[#D0FF00] opacity-40 group-hover:opacity-100 group-hover:shadow-[0_0_10px_#D0FF00] transition-all"></span>
             </div>
           </motion.div>
