@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-dark: #050505;
+    --text-light: #FEFFFC;
+    --accent-yellow: #D0FF00;
+    --accent-violet: #8116E0;
+  }
+
+  html {
+    overflow-x: hidden;
+    max-width: 100vw;
+    background-color: #050505;
+    color: #FEFFFC;
+  }
+
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+    background-color: #050505;
+    color: #FEFFFC;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 400;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display, .font-heading {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 500;
+    font-style: italic;
+    color: #D0FF00;
+    letter-spacing: -0.015em;
+  }
+
+  /* Form controls, buttons, and interactive elements default to Montserrat Regular (400) */
+  input, textarea, select, button {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .font-montserrat {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .font-baskervville {
+    font-family: 'Baskervville', Georgia, Cambria, 'Times New Roman', Times, serif;
+  }
+
+  /* Tech tags / mono override using Montserrat */
+  .font-mono, .font-mono-tech {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    letter-spacing: 0.02em;
+  }
+
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  iframe {
+    max-width: 100%;
+  }
+}
+
+/* Custom subtle glow utility classes (very subtle accents) */
+.glow-violet {
+  box-shadow: 0 0 35px -8px rgba(129, 22, 224, 0.25);
+}
+
+.glow-yellow {
+  box-shadow: 0 0 25px -6px rgba(208, 255, 0, 0.25);
+}
+
+.border-glow-violet {
+  border-color: rgba(129, 22, 224, 0.3);
+}
+
+.text-gradient-violet-yellow {
+  background: linear-gradient(135deg, #FEFFFC 40%, #D0FF00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Glassmorphism cards */
+.glass-panel {
+  background: rgba(254, 255, 252, 0.025);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(254, 255, 252, 0.07);
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(254, 255, 252, 0.045);
+  border-color: rgba(208, 255, 0, 0.25);
+  transform: translateY(-3px);
+}
+
+/* Infinite Marquee Animation */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 28s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #202020;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8116E0;
+}

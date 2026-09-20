@@ -1,0 +1,230 @@
+import React, { useState, useEffect } from 'react';
+import { PORTFOLIO_CONTENT } from '../data/portfolioContent';
+import { Menu, X, ArrowUpRight, Sparkles } from 'lucide-react';
+
+export const Navbar: React.FC = () => {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('home');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 30);
+
+      // Simple active section detection
+      const sections = ['home', 'services', 'work', 'about', 'process', 'contact'];
+      for (const section of sections) {
+        const el = document.getElementById(section);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 200 && rect.bottom >= 200) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Close mobile menu on resize to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Prevent background scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
+  const handleLinkClick = (href: string) => {
+    setMobileMenuOpen(false);
+    const targetId = href.replace('#', '');
+    const element = document.getElementById(targetId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-3 sm:px-6 py-3 sm:py-5 pointer-events-none">
+      <nav
+        id="main-navigation"
+        className={`pointer-events-auto w-full max-w-5xl rounded-full transition-all duration-300 px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between ${
+          scrolled
+            ? 'bg-[#050505]/90 backdrop-blur-xl border border-white/12 shadow-[0_8px_32px_rgba(0,0,0,0.8)]'
+            : 'bg-[#050505]/60 backdrop-blur-md border border-white/10'
+        }`}
+      >
+        {/* Brand Logo - Compact on mobile */}
+        <a
+          href="#home"
+          id="nav-logo"
+          onClick={(e) => {
+            e.preventDefault();
+            handleLinkClick('#home');
+          }}
+          className="flex items-center gap-2 group cursor-pointer focus:outline-none min-h-[44px]"
+        >
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#D0FF00] flex items-center justify-center font-bold text-[#050505] text-[11px] sm:text-xs transition-transform duration-300 group-hover:scale-105 shadow-[0_0_12px_rgba(208,255,0,0.4)] shrink-0">
+            EV
+          </div>
+          <div className="flex items-center gap-1 leading-none">
+            <span className="font-bold text-xs sm:text-sm tracking-wide text-[#FEFFFC]">
+              Emkay
+            </span>
+            <span className="text-[#D0FF00] text-[11px] font-bold">//</span>
+            <span className="text-white/70 text-[11px] sm:text-xs font-normal hidden xs:inline">
+              Visuals
+            </span>
+          </div>
+        </a>
+
+        {/* Desktop Navigation Links */}
+        <div className="hidden md:flex items-center gap-1 lg:gap-1.5">
+          {PORTFOLIO_CONTENT.navigation.map((item) => {
+            const sectionId = item.href.replace('#', '');
+            const isActive = activeSection === sectionId;
+
+            return (
+              <a
+                key={item.label}
+                href={item.href}
+                id={`nav-link-${sectionId}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleLinkClick(item.href);
+                }}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all duration-200 min-h-[44px] flex items-center justify-center ${
+                  isActive
+                    ? 'text-[#050505] bg-[#FEFFFC] font-semibold shadow-sm'
+                    : 'text-[#FEFFFC]/75 hover:text-[#FEFFFC] hover:bg-white/[0.08]'
+                }`}
+              >
+                {item.label}
+              </a>
+            );
+          })}
+        </div>
+
+        {/* Action Button & Mobile Toggle */}
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          <a
+            href="#contact"
+            id="nav-hire-me-btn"
+            onClick={(e) => {
+              e.preventDefault();
+              handleLinkClick('#contact');
+            }}
+            className="group relative inline-flex items-center justify-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#D0FF00] text-[#050505] font-bold text-xs sm:text-sm tracking-wide transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_18px_rgba(208,255,0,0.35)] whitespace-nowrap min-h-[38px] sm:min-h-[42px]"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#050505] group-hover:rotate-12 transition-transform shrink-0" />
+            <span className="whitespace-nowrap">Hire Me</span>
+            <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shrink-0" />
+          </a>
+
+          {/* Mobile Menu Trigger - 44px min tap target */}
+          <button
+            type="button"
+            id="mobile-menu-toggle"
+            aria-label="Toggle Navigation Menu"
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden w-11 h-11 flex items-center justify-center rounded-full text-white/85 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors focus:outline-none cursor-pointer"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5 text-[#D0FF00]" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile Drawer Dropdown & Backdrop */}
+      {mobileMenuOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="pointer-events-auto fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Drawer Menu */}
+          <div
+            id="mobile-nav-dropdown"
+            className="pointer-events-auto md:hidden fixed top-18 left-3 right-3 z-50 bg-[#0A0A0A] border border-white/15 rounded-3xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.9)] flex flex-col gap-3 max-h-[85vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <span className="text-xs font-semibold text-[#D0FF00] tracking-wide">
+                Portfolio Menu
+              </span>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-white/80 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-1 pt-1">
+              {PORTFOLIO_CONTENT.navigation.map((item) => {
+                const sectionId = item.href.replace('#', '');
+                const isActive = activeSection === sectionId;
+
+                return (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    id={`mobile-nav-${sectionId}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleLinkClick(item.href);
+                    }}
+                    className={`px-4 py-3 rounded-2xl text-sm font-medium tracking-wide transition-all min-h-[44px] flex items-center ${
+                      isActive
+                        ? 'bg-[#D0FF00] text-[#050505] font-bold shadow-md'
+                        : 'text-[#FEFFFC]/85 hover:bg-white/[0.08] hover:text-[#FEFFFC]'
+                    }`}
+                  >
+                    {item.label}
+                  </a>
+                );
+              })}
+            </div>
+
+            <div className="pt-3 border-t border-white/10 flex flex-col gap-2">
+              <a
+                href="#contact"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleLinkClick('#contact');
+                }}
+                className="w-full text-center py-3.5 rounded-2xl bg-[#D0FF00] text-[#050505] font-bold text-sm min-h-[44px] flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(208,255,0,0.4)]"
+              >
+                <Sparkles className="w-4 h-4 text-[#050505]" />
+                <span>Start a Project / Hire Me</span>
+              </a>
+              <div className="flex justify-center items-center gap-2 text-xs text-white/50 pt-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D0FF00]"></span>
+                <span>{PORTFOLIO_CONTENT.brand.statusBadge}</span>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </header>
+  );
+};
