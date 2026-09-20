@@ -51,7 +51,7 @@ export const Hero: React.FC = () => {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#D0FF00]"></span>
           </span>
           <span className="text-[11px] sm:text-xs font-semibold text-[#FEFFFC]/90 tracking-wide">
-            {hero.badge}
+            {hero.badgeMain} <span className="font-cormorant italic font-medium text-[#D0FF00]">{hero.badgeAccent}</span>
           </span>
           <span className="text-[#8116E0] text-xs hidden xs:inline">●</span>
           <span className="text-[11px] sm:text-xs font-medium text-[#D0FF00] tracking-wide">
@@ -59,8 +59,7 @@ export const Hero: React.FC = () => {
           </span>
         </motion.div>
 
-        {/* Hero Headline: "Your Vision, Visualized" entirely Montserrat Medium (weight 500), in Title Case, not italic.
-            "Your" in yellow #D0FF00, and "Vision, Visualized" in white #FEFFFC */}
+        {/* Hero Headline */}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -68,8 +67,8 @@ export const Hero: React.FC = () => {
           className="font-montserrat font-medium not-italic text-[clamp(2.2rem,7.2vw,5.5rem)] tracking-tight leading-[1.12] max-w-4xl px-2 break-words"
           style={{ fontStyle: 'normal' }}
         >
-          <span className="font-cormorant italic font-medium sm:font-semibold text-[#D0FF00] text-[1.12em]">Your </span>
-          <span className="font-montserrat font-medium text-[#FEFFFC]">Vision, Visualized</span>
+          <span className="font-cormorant italic font-medium sm:font-semibold text-[#D0FF00] text-[1.12em]">{hero.headingMain} </span>
+          <span className="font-montserrat font-medium text-[#FEFFFC]">{hero.headingAccent}</span>
         </motion.h1>
 
         {/* Short Subtext with Montserrat Regular, italic */}

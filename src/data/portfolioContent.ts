@@ -83,6 +83,15 @@ export interface SocialLinks {
 
 export const PORTFOLIO_CONTENT = {
   // ==========================================
+  // 0. SEO & META TAGS
+  // ==========================================
+  seo: {
+    metaTitle: 'Emkay Visuals – Graphic Designer & Motion Graphics Artist',
+    metaDescription: 'High-end, futuristic portfolio for Emkay Visuals – Graphic Designer & Motion Graphics Artist with 5+ years of experience in Posters, Visual Branding, Movie Art, Thumbnails & Motion Graphics.',
+    ogImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
+  },
+
+  // ==========================================
   // 1. BRAND & ARTIST IDENTITY
   // ==========================================
   brand: {
@@ -135,8 +144,10 @@ export const PORTFOLIO_CONTENT = {
   // 4. HERO SECTION
   // ==========================================
   hero: {
-    badge: '5+ Years of Obsessive Visual Craft',
-    headlineMain: 'Your Vision, Visualized',
+    badgeMain: '5+ Years of',
+    badgeAccent: 'Obsessive Visual Craft',
+    headingMain: 'Your',
+    headingAccent: 'Vision, Visualized',
     subtext:
       'Visual designer creating distinctive posters, digital art, and high impact visual identities for brands and creative projects.',
     primaryButtonText: 'View Work',
@@ -162,6 +173,50 @@ export const PORTFOLIO_CONTENT = {
       'After Effects Expert',
       'Vector Systems',
     ],
+  },
+
+  // ==========================================
+  // 4.1 SERVICES SECTION HEADER
+  // ==========================================
+  servicesSection: {
+    badgeMain: 'Disciplines &',
+    badgeAccent: 'Offerings',
+    headingMain: 'Specialized Creative',
+    headingAccent: 'Services',
+    subtext: 'From full theatrical key art packages to high-octane 4K motion graphics, I construct daring visual narratives that resonate with high-discerning audiences.',
+  },
+
+  // ==========================================
+  // 4.2 PROJECTS / ARCHIVE SECTION HEADER
+  // ==========================================
+  projectsSection: {
+    badgeMain: 'Selected',
+    badgeAccent: 'Archive',
+    headingMain: 'Featured Design',
+    headingAccent: 'Portfolio',
+    subtext: 'Filter through 5+ years of commissioned artworks, sports graphics, theatrical movie key art, and visual identities. Click any piece to inspect in full detail.',
+  },
+
+  // ==========================================
+  // 4.3 PROCESS SECTION HEADER
+  // ==========================================
+  processSection: {
+    badgeMain: 'Methodology //',
+    badgeAccent: 'Zero Noise',
+    headingMain: 'A Rigorous 4-Step',
+    headingAccent: 'Creative Roadmap',
+    subtext: 'Every project moves through an airtight, predictable progression ensuring full creative alignment and pristine execution without unnecessary delays.',
+  },
+
+  // ==========================================
+  // 4.4 TESTIMONIALS SECTION HEADER
+  // ==========================================
+  testimonialsSection: {
+    badgeMain: 'Endorsements &',
+    badgeAccent: 'Reputation',
+    headingMain: 'Trusted by Visionary',
+    headingAccent: 'Directors & Founders',
+    satisfactionText: '5.0 Average Client Satisfaction',
   },
 
   // ==========================================
@@ -487,15 +542,17 @@ export const PORTFOLIO_CONTENT = {
   // 8. ABOUT ME SECTION
   // ==========================================
   about: {
-    badge: 'Behind the Screen',
-    heading: 'Engineering Visual Worlds with Uncompromising Precision',
+    badgeMain: 'Behind the',
+    badgeAccent: 'Screen',
+    headingMain: 'Engineering Visual Worlds with Uncompromising',
+    headingAccent: 'Precision',
     bioParagraphs: [
       "I'm Emkay, a graphic designer and digital artist specializing in sports design, photo manipulation, promotional visuals, and creative poster design.",
       "My work combines strong composition, cinematic imagery, bold typography, and detailed visual effects to create designs that feel dynamic, polished, and built to stand out.",
       "From sports posters and campaign visuals to digital artwork and social media content, I focus on turning ideas into visuals that communicate clearly and leave a lasting impression.",
     ],
-    // Easy to swap: replace '/artist-avatar.svg' with your photo URL or image path when ready
-    photoUrl: '/artist-avatar.svg',
+    // Easy to swap: replace '/Images/emkay.webp' with your photo URL or image path when ready
+    photoUrl: '/Images/emkay.webp',
     photoAlt: 'Emkay - Graphic Designer & Digital Artist',
     experienceBadge: '5+ Years in Industry',
     
@@ -608,8 +665,10 @@ export const PORTFOLIO_CONTENT = {
   // 11. CONTACT SECTION
   // ==========================================
   contact: {
-    badge: "Let's Build Something Iconic",
-    heading: 'Ready to Bring Your Vision to Life?',
+    badgeMain: "Let's",
+    badgeAccent: "Collaborate",
+    headingMain: 'Ready to Bring Your Vision to',
+    headingAccent: 'Life?',
     subtext:
       'Have an upcoming music release, movie key art project, brand overhaul, or motion graphics brief? Send a project brief directly or reach out on WhatsApp or Instagram.',
     responseTime: 'Typical response time: under 4 hours',
@@ -641,3 +700,60 @@ export const PORTFOLIO_CONTENT = {
     rightsNote: 'Handcrafted with precision. All artworks protected under creative copyright.',
   },
 };
+
+import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
+
+export type PortfolioContentType = typeof PORTFOLIO_CONTENT;
+
+let listeners: (() => void)[] = [];
+
+export function subscribeToPortfolio(cb: () => void) {
+  listeners.push(cb);
+  return () => {
+    listeners = listeners.filter(l => l !== cb);
+  };
+}
+
+function notifyListeners() {
+  listeners.forEach(cb => cb());
+}
+
+export async function loadPortfolioFromFirestore() {
+  try {
+    const docRef = doc(db, "portfolio", "content");
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const data = snap.data() as PortfolioContentType;
+      Object.assign(PORTFOLIO_CONTENT, data);
+      notifyListeners();
+    }
+  } catch (err) {
+    console.log("Using local portfolio fallback (offline or empty):", err);
+  }
+}
+
+export async function savePortfolioToFirestore(newData: PortfolioContentType) {
+  try {
+    const docRef = doc(db, "portfolio", "content");
+    await setDoc(docRef, newData);
+    Object.assign(PORTFOLIO_CONTENT, newData);
+    notifyListeners();
+    return true;
+  } catch (err) {
+    console.error("Error saving portfolio content:", err);
+    throw err;
+  }
+}
+
+export async function resetPortfolioToDefault() {
+  try {
+    const docRef = doc(db, "portfolio", "content");
+    await deleteDoc(docRef);
+    window.location.reload();
+  } catch (err) {
+    console.error("Error resetting portfolio:", err);
+    throw err;
+  }
+}
+

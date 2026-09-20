@@ -19,7 +19,7 @@ interface ServicesBentoProps {
 }
 
 export const ServicesBento: React.FC<ServicesBentoProps> = ({ onSelectService }) => {
-  const { services } = PORTFOLIO_CONTENT;
+  const { services, servicesSection } = PORTFOLIO_CONTENT;
 
   // Icon mapping helper
   const getIcon = (name: string) => {
@@ -78,15 +78,14 @@ export const ServicesBento: React.FC<ServicesBentoProps> = ({ onSelectService })
         <div>
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-3 sm:mb-4">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Disciplines &amp; <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">Offerings</span></span>
+            <span>{servicesSection.badgeMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{servicesSection.badgeAccent}</span></span>
           </div>
           <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight leading-[1.15]">
-            Specialized Creative Services
+            {servicesSection.headingMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{servicesSection.headingAccent}</span>
           </h2>
         </div>
         <p className="max-w-md text-sm sm:text-base text-white/70 font-normal leading-relaxed">
-          From full theatrical key art packages to high-octane 4K motion graphics, I construct
-          daring visual narratives that resonate with high-discerning audiences.
+          {servicesSection.subtext}
         </p>
       </motion.div>
 

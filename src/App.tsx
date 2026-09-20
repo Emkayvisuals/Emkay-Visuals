@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Preloader } from './components/Preloader';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -12,10 +12,55 @@ import { Testimonials } from './components/Testimonials';
 import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
 import { FloatingContactBar } from './components/FloatingContactBar';
+import { AdminDashboard } from './components/AdminDashboard';
+import { PORTFOLIO_CONTENT, loadPortfolioFromFirestore, subscribeToPortfolio } from './data/portfolioContent';
+import { trackVisit } from './lib/analytics';
 
 export default function App() {
+  const [tick, setTick] = useState(0);
   const [prefilledService, setPrefilledService] = useState<string | undefined>(undefined);
   const [prefilledProject, setPrefilledProject] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    trackVisit();
+    loadPortfolioFromFirestore();
+    const unsubscribe = subscribeToPortfolio(() => {
+      setTick(t => t + 1);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (PORTFOLIO_CONTENT.seo) {
+      const { metaTitle, metaDescription, ogImage } = PORTFOLIO_CONTENT.seo;
+      if (metaTitle) {
+        document.title = metaTitle;
+        const ogTitle = document.querySelector('meta[property="og:title"]');
+        if (ogTitle) ogTitle.setAttribute('content', metaTitle);
+        const twTitle = document.querySelector('meta[name="twitter:title"]');
+        if (twTitle) twTitle.setAttribute('content', metaTitle);
+      }
+      if (metaDescription) {
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) metaDesc.setAttribute('content', metaDescription);
+        const ogDesc = document.querySelector('meta[property="og:description"]');
+        if (ogDesc) ogDesc.setAttribute('content', metaDescription);
+        const twDesc = document.querySelector('meta[name="twitter:description"]');
+        if (twDesc) twDesc.setAttribute('content', metaDescription);
+      }
+      if (ogImage) {
+        const ogImg = document.querySelector('meta[property="og:image"]');
+        if (ogImg) ogImg.setAttribute('content', ogImage);
+        const twImg = document.querySelector('meta[name="twitter:image"]');
+        if (twImg) twImg.setAttribute('content', ogImage);
+      }
+    }
+  }, [tick]);
+
+  const path = window.location.pathname;
+  if (path === '/admin') {
+    return <AdminDashboard />;
+  }
 
   const handleSelectService = (serviceTitle: string) => {
     setPrefilledService(serviceTitle);
@@ -71,3 +116,4 @@ export default function App() {
     </div>
   );
 }
+

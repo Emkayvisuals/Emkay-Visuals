@@ -4,7 +4,7 @@ import { Star, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export const Testimonials: React.FC = () => {
-  const { testimonials } = PORTFOLIO_CONTENT;
+  const { testimonials, testimonialsSection } = PORTFOLIO_CONTENT;
 
   return (
     <section className="relative py-20 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
@@ -25,10 +25,10 @@ export const Testimonials: React.FC = () => {
         <div>
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Endorsements &amp; <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">Reputation</span></span>
+            <span>{testimonialsSection.badgeMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{testimonialsSection.badgeAccent}</span></span>
           </div>
           <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight leading-[1.15]">
-            Trusted by Visionary Directors &amp; Founders
+            {testimonialsSection.headingMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{testimonialsSection.headingAccent}</span>
           </h2>
         </div>
         <div className="flex items-center gap-2 text-xs text-white/60 font-medium">
@@ -37,7 +37,7 @@ export const Testimonials: React.FC = () => {
               <Star key={i} className="w-4 h-4 fill-current" />
             ))}
           </div>
-          <span>5.0 Average Client Satisfaction</span>
+          <span>{testimonialsSection.satisfactionText}</span>
         </div>
       </motion.div>
 

@@ -15,9 +15,10 @@ interface WorkGalleryProps {
 }
 
 export const WorkGallery: React.FC<WorkGalleryProps> = ({ onSelectProjectForContact }) => {
-  const { categories, projects } = PORTFOLIO_CONTENT;
+  const { categories, projects, projectsSection } = PORTFOLIO_CONTENT;
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
+  const [loadedImages, setLoadedImages] = useState<{ [id: string]: boolean }>({});
 
   // Filter items
   const filteredProjects =
@@ -76,15 +77,14 @@ export const WorkGallery: React.FC<WorkGalleryProps> = ({ onSelectProjectForCont
         <div>
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-3 sm:mb-4">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Selected <span className="font-baskervville italic text-[#FEFFFC]">Archive</span></span>
+            <span>{projectsSection.badgeMain} <span className="font-baskervville italic text-[#FEFFFC]">{projectsSection.badgeAccent}</span></span>
           </div>
           <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight leading-[1.15]">
-            Featured Design Portfolio
+            {projectsSection.headingMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{projectsSection.headingAccent}</span>
           </h2>
         </div>
         <p className="max-w-md text-sm sm:text-base text-white/70 font-normal leading-relaxed">
-          Filter through 5+ years of commissioned artworks, sports graphics, theatrical movie key art,
-          and visual identities. Click any piece to inspect in full detail.
+          {projectsSection.subtext}
         </p>
       </motion.div>
 
@@ -158,11 +158,18 @@ export const WorkGallery: React.FC<WorkGalleryProps> = ({ onSelectProjectForCont
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#D0FF00]/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-20" />
 
                 {/* Media Container with Zoom */}
-                <div className="relative aspect-[4/3] w-full overflow-hidden bg-black/60">
+                <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#121212]">
+                  {/* LQIP shimmer placeholder while loading */}
+                  {!loadedImages[project.id] && (
+                    <div className="absolute inset-0 bg-white/5 animate-pulse filter blur-xl transform scale-105" />
+                  )}
                   <img
                     src={project.image}
                     alt={project.title}
-                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-108"
+                    onLoad={() => setLoadedImages(prev => ({ ...prev, [project.id]: true }))}
+                    className={`w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-108 ${
+                      loadedImages[project.id] ? 'opacity-100 blur-0 scale-100' : 'opacity-60 blur-md scale-105'
+                    }`}
                     loading="lazy"
                     referrerPolicy="no-referrer"
                   />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PORTFOLIO_CONTENT, WEB3FORMS_ACCESS_KEY } from '../data/portfolioContent';
+import { saveProjectBrief, trackClick } from '../lib/analytics';
 import {
   Mail,
   MessageSquare,
@@ -32,7 +33,10 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
     email: '',
     service: contact.servicesOptions[0],
     budget: contact.budgetRanges[1],
+    deadline: '',
     message: '',
+    referenceLink: '',
+    website: '', // honeypot spam protection
   });
 
   const [validationErrors, setValidationErrors] = useState<{
@@ -75,6 +79,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
       errors.name = 'Please provide your name or brand name.';
     } else if (formData.name.trim().length < 2) {
       errors.name = 'Name must be at least 2 characters.';
+    } else if (formData.name.trim().length > 100) {
+      errors.name = 'Name must be under 100 characters.';
     }
 
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -82,12 +88,16 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
       errors.email = 'Please enter a valid email address.';
     } else if (!emailPattern.test(formData.email.trim())) {
       errors.email = 'Please enter a valid email format (e.g. name@domain.com).';
+    } else if (formData.email.trim().length > 100) {
+      errors.email = 'Email must be under 100 characters.';
     }
 
     if (!formData.message.trim()) {
       errors.message = 'Please provide brief details about your project.';
     } else if (formData.message.trim().length < 5) {
       errors.message = 'Please provide a bit more detail (at least 5 characters).';
+    } else if (formData.message.trim().length > 2000) {
+      errors.message = 'Message must be under 2000 characters.';
     }
 
     setValidationErrors(errors);
@@ -98,11 +108,20 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
     e.preventDefault();
     setErrorMessage(null);
 
+    // Spam honeypot check
+    if (formData.website) {
+      setSubmitted(true);
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
 
     setLoading(true);
+
+    let emailSent = false;
+    let firestoreSaved = false;
 
     try {
       const response = await fetch('https://api.web3forms.com/submit', {
@@ -117,7 +136,9 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           email: formData.email.trim(),
           service: formData.service,
           budget: formData.budget,
+          deadline: formData.deadline.trim() || 'Flexible',
           message: formData.message.trim(),
+          reference_link: formData.referenceLink.trim(),
           subject: `New Project Brief from ${formData.name.trim()} - Emkay Visuals`,
           from_name: formData.name.trim(),
           replyto: formData.email.trim(),
@@ -125,22 +146,36 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
       });
 
       const data = await response.json();
-
       if (response.ok && data.success) {
-        setSubmitted(true);
-      } else {
-        // If placeholder access key or submission issue, show helpful message and WhatsApp fallback
-        const msg = data.message || 'Submission error. Please connect directly via WhatsApp.';
-        setErrorMessage(msg);
+        emailSent = true;
       }
     } catch (err: unknown) {
-      const fallbackMsg = err instanceof Error ? err.message : 'Network error';
-      setErrorMessage(
-        `Unable to dispatch form at this moment (${fallbackMsg}). Please connect directly on WhatsApp!`
-      );
-    } finally {
-      setLoading(false);
+      console.error("Web3Forms error:", err);
     }
+
+    try {
+      await saveProjectBrief({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        service: formData.service,
+        budget: formData.budget,
+        deadline: formData.deadline.trim() || 'Flexible',
+        message: formData.message.trim(),
+        referenceLink: formData.referenceLink.trim(),
+      });
+      firestoreSaved = true;
+    } catch (err: unknown) {
+      console.error("Firestore save error:", err);
+    }
+
+    if (emailSent || firestoreSaved) {
+      setSubmitted(true);
+    } else {
+      setErrorMessage(
+        'Unable to dispatch submission at this moment. Please connect directly on WhatsApp!'
+      );
+    }
+    setLoading(false);
   };
 
   const handleCopyEmail = () => {
@@ -180,11 +215,11 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           <div>
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-3 sm:mb-4">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Let's <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">Collaborate</span></span>
+              <span>{contact.badgeMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{contact.badgeAccent}</span></span>
             </div>
 
             <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight leading-[1.15] mb-3 sm:mb-4">
-              Ready to Bring Your Vision to <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">Life?</span>
+              {contact.headingMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{contact.headingAccent}</span>
             </h2>
 
             <p className="text-sm sm:text-base text-white/70 font-normal leading-relaxed mb-6 sm:mb-8">
@@ -375,7 +410,10 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                         email: '',
                         service: contact.servicesOptions[0],
                         budget: contact.budgetRanges[1],
+                        deadline: '',
                         message: '',
+                        referenceLink: '',
+                        website: '',
                       });
                     }}
                     className="px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-[#FEFFFC] text-xs font-semibold transition-colors cursor-pointer min-h-[44px] flex items-center justify-center"
@@ -492,6 +530,51 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                       </span>
                     )}
                   </div>
+                </div>
+
+                {/* Deadline & Reference Link Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                  <div>
+                    <label className="block text-xs font-medium text-white/70 mb-2 tracking-wide">
+                      Target Deadline / Timeline
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={50}
+                      placeholder="e.g. Next 3 weeks / Flexible"
+                      value={formData.deadline}
+                      onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 focus:border-[#D0FF00] focus:ring-1 focus:ring-[#D0FF00] text-sm text-[#FEFFFC] placeholder-white/25 outline-none transition-colors min-h-[46px]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-white/70 mb-2 tracking-wide">
+                      Reference Link / Moodboard URL (Optional)
+                    </label>
+                    <input
+                      type="url"
+                      maxLength={250}
+                      placeholder="https://..."
+                      value={formData.referenceLink}
+                      onChange={(e) => setFormData({ ...formData, referenceLink: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 focus:border-[#D0FF00] focus:ring-1 focus:ring-[#D0FF00] text-sm text-[#FEFFFC] placeholder-white/25 outline-none transition-colors min-h-[46px]"
+                    />
+                  </div>
+                </div>
+
+                {/* Hidden Honeypot Field for Spam Protection */}
+                <div aria-hidden="true" style={{ opacity: 0, position: 'absolute', left: '-9999px', height: 0, overflow: 'hidden' }}>
+                  <label htmlFor="website">Website</label>
+                  <input
+                    type="text"
+                    id="website"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={formData.website}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                  />
                 </div>
 
                 {/* Service Selection */}

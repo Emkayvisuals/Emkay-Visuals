@@ -1,0 +1,25 @@
+{
+  "entities": {
+    "PortfolioContent": {
+      "title": "PortfolioContent",
+      "description": "Portfolio content document stored in Firestore",
+      "type": "object",
+      "properties": {
+        "brand": { "type": "object" },
+        "hero": { "type": "object" },
+        "stats": { "type": "array" },
+        "services": { "type": "array" },
+        "projects": { "type": "array" },
+        "about": { "type": "object" },
+        "testimonials": { "type": "array" },
+        "socials": { "type": "object" }
+      }
+    }
+  },
+  "firestore": {
+    "/portfolio/content": {
+      "schema": { "$ref": "#/entities/PortfolioContent" },
+      "description": "Main portfolio content managed via admin panel"
+    }
+  }
+}

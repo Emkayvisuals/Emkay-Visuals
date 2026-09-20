@@ -4,7 +4,7 @@ import { Sparkles, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export const ProcessSection: React.FC = () => {
-  const { process } = PORTFOLIO_CONTENT;
+  const { process, processSection } = PORTFOLIO_CONTENT;
 
   return (
     <section id="process" className="relative py-20 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
@@ -24,14 +24,13 @@ export const ProcessSection: React.FC = () => {
       >
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-3">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Methodology // <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">Zero Noise</span></span>
+          <span>{processSection.badgeMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{processSection.badgeAccent}</span></span>
         </div>
         <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight">
-          A Rigorous 4-Step Creative Roadmap
+          {processSection.headingMain} <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">{processSection.headingAccent}</span>
         </h2>
         <p className="mt-3.5 text-sm sm:text-base text-white/70 font-normal max-w-xl mx-auto">
-          Every project moves through an airtight, predictable progression ensuring full creative
-          alignment and pristine execution without unnecessary delays.
+          {processSection.subtext}
         </p>
       </motion.div>
 
