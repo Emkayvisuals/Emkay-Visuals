@@ -2,6 +2,7 @@ import React from 'react';
 import { PORTFOLIO_CONTENT } from '../data/portfolioContent';
 import { getResolvedSocialLinks, getPlatformMeta } from '../lib/socialLinks';
 import { ArrowUp } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export const Footer: React.FC = () => {
   const { footer, socials, navigation, brand } = PORTFOLIO_CONTENT;
@@ -81,15 +82,16 @@ export const Footer: React.FC = () => {
             </div>
           )}
 
-          {/* Dynamic Social Links - Icon Only */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          {/* Dynamic Social Links - Icon Only with Staggered Viewport Fade-In */}
+          <div className="social-links-container flex flex-wrap items-center gap-2.5">
             {resolvedLinks.map((item, idx) => {
               const meta = getPlatformMeta(item.platform);
               const IconComp = meta.icon;
               const isExternal = !item.isMailto;
+              const accentColor = meta.accentColor || '#D0FF00';
 
               return (
-                <a
+                <motion.a
                   key={item.id || idx}
                   href={item.url}
                   target={isExternal ? '_blank' : undefined}
@@ -97,22 +99,43 @@ export const Footer: React.FC = () => {
                   aria-label={item.label || item.platform}
                   title={`${item.label} (${item.displayHandle})`}
                   id={`footer-social-${item.platform.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${idx}`}
-                  className={`group w-11 h-11 flex items-center justify-center rounded-full bg-white/[0.04] border border-white/10 ${meta.hoverBorder} hover:bg-white/[0.08] hover:scale-110 transition-all duration-200 text-white/80 hover:text-[#D0FF00] shrink-0 min-h-[44px] min-w-[44px]`}
+                  initial={{ opacity: 0, y: 14, scale: 0.9 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  viewport={{ once: true, margin: '-20px' }}
+                  transition={{
+                    duration: 0.45,
+                    delay: idx * 0.06,
+                    ease: [0.21, 0.47, 0.32, 0.98],
+                  }}
+                  style={
+                    {
+                      '--hover-accent': accentColor,
+                    } as React.CSSProperties
+                  }
+                  className={`group relative w-11 h-11 flex items-center justify-center rounded-full bg-white/[0.04] border border-white/10 ${meta.hoverBorder} hover:bg-white/[0.09] hover:scale-110 active:scale-95 transition-all duration-300 ease-out text-white/75 hover:shadow-[0_0_16px_rgba(208,255,0,0.18)] shrink-0 min-h-[44px] min-w-[44px] cursor-pointer`}
                 >
-                  <IconComp className="w-5 h-5 text-white/80 group-hover:text-[#D0FF00] group-hover:scale-105 transition-all" />
-                </a>
+                  <IconComp className="w-5 h-5 text-white/75 group-hover:text-[var(--hover-accent)] group-hover:scale-110 transition-all duration-300 ease-out" />
+                </motion.a>
               );
             })}
 
             {/* Back to top */}
-            <button
+            <motion.button
               type="button"
               onClick={scrollToTop}
               aria-label="Scroll to Top"
-              className="w-11 h-11 flex items-center justify-center rounded-full bg-[#D0FF00] text-[#050505] hover:scale-105 transition-all shadow-[0_0_15px_rgba(208,255,0,0.35)] cursor-pointer ml-1 shrink-0 min-h-[44px] min-w-[44px]"
+              initial={{ opacity: 0, y: 14, scale: 0.85 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, margin: '-20px' }}
+              transition={{
+                duration: 0.45,
+                delay: resolvedLinks.length * 0.06,
+                ease: [0.21, 0.47, 0.32, 0.98],
+              }}
+              className="w-11 h-11 flex items-center justify-center rounded-full bg-[#D0FF00] text-[#050505] hover:scale-110 active:scale-95 transition-all duration-300 shadow-[0_0_15px_rgba(208,255,0,0.35)] hover:shadow-[0_0_22px_rgba(208,255,0,0.55)] cursor-pointer ml-1 shrink-0 min-h-[44px] min-w-[44px]"
             >
-              <ArrowUp className="w-4 h-4" />
-            </button>
+              <ArrowUp className="w-4 h-4 transition-transform duration-300 group-hover:-translate-y-0.5" />
+            </motion.button>
           </div>
         </div>
 

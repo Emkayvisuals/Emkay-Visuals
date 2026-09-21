@@ -1027,10 +1027,14 @@ export const DEFAULT_PORTFOLIO_CONTENT = {
       'Tell me about your release date, narrative references, dimensions, sound/theme inspirations, and key deliverables...',
     submitButtonText: 'Send Project Brief',
     submittingButtonText: 'Sending Project Brief...',
-    successTitle: 'Transmission Received',
+    confirmationTitle: 'We Got The Brief!',
+    confirmationMessage:
+      "Thanks for trusting me with your project. I'll review the details and get back to you within 24/48 hours.",
+    confirmationClosing: "Ideas received. Let's create.",
+    successTitle: 'We Got The Brief!',
     successMessage:
-      'Thank you. Your project brief has been successfully sent to Emkay. He will review your specifications and reply within 4 hours.',
-    sendAnotherButtonText: 'Send Another Message',
+      "Thanks for trusting me with your project. I'll review the details and get back to you within 24/48 hours.",
+    sendAnotherButtonText: 'Send Another Brief',
     whatsappFollowupButtonText: 'Follow up on WhatsApp',
     whatsappFallbackNotice: 'You can also chat directly on WhatsApp right away.',
     whatsappFallbackButtonText: 'Chat on WhatsApp',

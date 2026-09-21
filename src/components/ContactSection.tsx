@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PORTFOLIO_CONTENT, WEB3FORMS_ACCESS_KEY } from '../data/portfolioContent';
 import { saveProjectBrief } from '../lib/analytics';
 import { getResolvedSocialLinks, getPlatformMeta } from '../lib/socialLinks';
+import { CustomDropdown } from './CustomDropdown';
 import {
   Mail,
   MessageSquare,
@@ -14,7 +15,113 @@ import {
   ArrowUpRight,
   Loader2,
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
+
+interface AnimatedCheckmarkProps {
+  shouldReduceMotion?: boolean | null;
+}
+
+const AnimatedCheckmark: React.FC<AnimatedCheckmarkProps> = ({ shouldReduceMotion }) => {
+  return (
+    <motion.div
+      className="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-5 sm:mb-6 flex items-center justify-center shrink-0"
+      initial={{ scale: shouldReduceMotion ? 1 : 0.85, opacity: shouldReduceMotion ? 1 : 0 }}
+      animate={
+        shouldReduceMotion
+          ? { scale: 1, opacity: 1 }
+          : {
+              scale: [0.85, 1, 1.08, 1],
+              opacity: 1,
+            }
+      }
+      transition={{
+        duration: shouldReduceMotion ? 0 : 1.15,
+        times: [0, 0.45, 0.88, 1],
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      aria-hidden="true"
+    >
+      {/* Outer Faint Violet #8116E0 Glow */}
+      <motion.div
+        className="absolute -inset-3 rounded-full bg-[#8116E0]/25 blur-2xl pointer-events-none"
+        initial={{ opacity: shouldReduceMotion ? 0.6 : 0, scale: 0.8 }}
+        animate={
+          shouldReduceMotion
+            ? { opacity: 0.6, scale: 1 }
+            : {
+                opacity: [0, 0.3, 0.75, 0.45],
+                scale: [0.8, 1, 1.2, 1],
+              }
+        }
+        transition={{
+          duration: shouldReduceMotion ? 0 : 1.2,
+          times: [0, 0.4, 0.88, 1],
+          ease: 'easeOut',
+        }}
+      />
+
+      {/* Inner Soft Yellow #D0FF00 Glow */}
+      <motion.div
+        className="absolute inset-1 rounded-full bg-[#D0FF00]/20 blur-xl pointer-events-none"
+        initial={{ opacity: shouldReduceMotion ? 0.6 : 0, scale: 0.8 }}
+        animate={
+          shouldReduceMotion
+            ? { opacity: 0.6, scale: 1 }
+            : {
+                opacity: [0, 0.35, 0.85, 0.55],
+                scale: [0.8, 0.95, 1.15, 1],
+              }
+        }
+        transition={{
+          duration: shouldReduceMotion ? 0 : 1.2,
+          times: [0, 0.4, 0.88, 1],
+          ease: 'easeOut',
+        }}
+      />
+
+      {/* SVG Checkmark */}
+      <svg
+        viewBox="0 0 96 96"
+        className="w-full h-full relative z-10 overflow-visible"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Step 1: Clockwise sweep circle outline (~0.5s) */}
+        <motion.circle
+          cx="48"
+          cy="48"
+          r="40"
+          stroke="#D0FF00"
+          strokeWidth="4"
+          strokeLinecap="round"
+          style={{ transformOrigin: '48px 48px', rotate: -90 }}
+          initial={{ pathLength: shouldReduceMotion ? 1 : 0, opacity: shouldReduceMotion ? 1 : 0 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          transition={{
+            duration: shouldReduceMotion ? 0 : 0.5,
+            ease: [0.65, 0, 0.35, 1],
+          }}
+        />
+
+        {/* Step 2: Inner Checkmark path (~0.35s ease-out after circle sweep) */}
+        <motion.path
+          d="M28 48 L42 62 L68 36"
+          stroke="#D0FF00"
+          strokeWidth="4.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{ pathLength: shouldReduceMotion ? 1 : 0, opacity: shouldReduceMotion ? 1 : 0 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          transition={{
+            duration: shouldReduceMotion ? 0 : 0.35,
+            delay: shouldReduceMotion ? 0 : 0.5,
+            ease: [0.16, 1, 0.3, 1],
+          }}
+        />
+      </svg>
+    </motion.div>
+  );
+};
 
 interface ContactSectionProps {
   prefilledService?: string;
@@ -61,18 +168,35 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
     'Tell me about your release date, narrative references, dimensions, sound/theme inspirations, and key deliverables...';
   const submitButtonText = contact?.submitButtonText || 'Send Project Brief';
   const submitLoadingText = contact?.submittingButtonText || 'Sending Project Brief...';
-  const successTitle = contact?.successTitle || 'Transmission Received';
-  const successButtonText = contact?.sendAnotherButtonText || 'Send Another Message';
+  const confirmationTitle =
+    (contact as any)?.confirmationTitle ||
+    contact?.successTitle ||
+    'We Got The Brief!';
+  const confirmationMessage =
+    (contact as any)?.confirmationMessage ||
+    contact?.successMessage ||
+    "Thanks for trusting me with your project. I'll review the details and get back to you within 24/48 hours.";
+  const confirmationClosing =
+    (contact as any)?.confirmationClosing ||
+    (contact as any)?.confirmationTagline ||
+    "Ideas received. Let's create.";
+  const successButtonText = contact?.sendAnotherButtonText || 'Send Another Brief';
   const responseTime = contact?.responseTime || 'Average response time: < 4 hours worldwide';
 
-  const servicesOptions = contact?.servicesOptions || [
-    'Theatrical & Movie Key Art',
-    'Sports Visuals & Matchday Creative',
-    'Motion Graphics & Animation',
-    'Cover Art & Album Packaging',
-    'Full Visual Identity Systems',
-    'Creative Direction Consultation',
-  ];
+  const servicesOptions =
+    contact?.servicesOptions && contact.servicesOptions.length > 0
+      ? contact.servicesOptions
+      : [
+          'Posters & Art Prints',
+          'Club & Event Flyers',
+          'Visual Branding & Identity',
+          'Movie Posters & Key Art',
+          'Photo Manipulation & Composite',
+          'Music / Album Covers',
+          'High-CTR Thumbnail Design',
+          'Motion Graphics & Video Animation',
+          'Complete Full-Package Campaign',
+        ];
 
   const budgetRanges = contact?.budgetRanges || [
     '$50 - $500',
@@ -86,7 +210,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    service: servicesOptions[0] || 'Theatrical & Movie Key Art',
+    service: servicesOptions[0] || 'Posters & Art Prints',
     budget: budgetRanges[0] || '$50 - $500',
     deadline: '',
     message: '',
@@ -104,6 +228,17 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedEmail, setCopiedEmail] = useState(false);
+  const confirmationCardRef = useRef<HTMLDivElement>(null);
+  const shouldReduceMotion = useReducedMotion();
+
+  // Auto-scroll confirmation card into view on successful submission
+  useEffect(() => {
+    if (submitted && confirmationCardRef.current) {
+      setTimeout(() => {
+        confirmationCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 60);
+    }
+  }, [submitted]);
 
   // If user clicked "Request Quote" or "Inquire Similar Project", prefill form
   useEffect(() => {
@@ -385,22 +520,93 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
             {submitted ? (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
-                className="py-12 sm:py-16 text-center flex flex-col items-center"
+                ref={confirmationCardRef}
+                role="status"
+                aria-live="polite"
+                initial={{ opacity: 0, scale: 0.93, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="w-full max-w-[560px] mx-auto rounded-[24px] sm:rounded-[28px] bg-[#0A0A0A] border border-white/12 p-8 sm:p-10 md:p-12 shadow-[0_0_50px_rgba(129,22,224,0.25),0_20px_45px_rgba(0,0,0,0.85)] relative overflow-hidden text-center flex flex-col items-center justify-center"
               >
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#D0FF00]/20 border border-[#D0FF00] flex items-center justify-center text-[#D0FF00] mb-5 shadow-[0_0_25px_rgba(208,255,0,0.4)]">
-                  <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
-                </div>
-                <h3 className="font-montserrat font-medium italic text-2xl sm:text-3xl text-[#D0FF00] mb-2">
-                  {successTitle}
-                </h3>
-                <p className="text-white/70 max-w-md mb-6 font-normal text-sm sm:text-base leading-relaxed px-2">
-                  Thank you, <span className="text-[#D0FF00] font-bold">{formData.name}</span>. Your project brief has been successfully sent to <span className="text-white font-medium">{socials.email}</span>. Emkay will review your specifications and reply to{' '}
-                  <span className="text-white font-medium">{formData.email}</span> within 4 hours.
-                </p>
-                <div className="flex flex-col sm:flex-row items-center gap-3">
+                {/* Soft Violet Glow Backdrop */}
+                <div
+                  className="absolute -top-20 -right-20 w-56 h-56 bg-[#8116E0]/20 rounded-full blur-3xl pointer-events-none -z-10"
+                  aria-hidden="true"
+                />
+                <div
+                  className="absolute -bottom-20 -left-20 w-56 h-56 bg-[#8116E0]/20 rounded-full blur-3xl pointer-events-none -z-10"
+                  aria-hidden="true"
+                />
+
+                {/* Animated Circular SVG Checkmark */}
+                <AnimatedCheckmark shouldReduceMotion={shouldReduceMotion} />
+
+                {/* 1. Top, bold heading in the website's yellow #D0FF00, Montserrat Bold */}
+                <motion.h3
+                  initial={{ opacity: shouldReduceMotion ? 1 : 0, y: shouldReduceMotion ? 0 : 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: shouldReduceMotion ? 0 : 0.4,
+                    delay: shouldReduceMotion ? 0 : 0.9,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  className="font-montserrat font-bold text-2xl sm:text-3xl md:text-[32px] text-[#D0FF00] tracking-tight mb-3 sm:mb-4 text-center leading-tight"
+                >
+                  {confirmationTitle}
+                </motion.h3>
+
+                {/* 2. Middle paragraph, white/light grey #FEFFFC at reduced opacity, Montserrat Regular */}
+                <motion.p
+                  initial={{ opacity: shouldReduceMotion ? 0.75 : 0, y: shouldReduceMotion ? 0 : 8 }}
+                  animate={{ opacity: 0.75, y: 0 }}
+                  transition={{
+                    duration: shouldReduceMotion ? 0 : 0.4,
+                    delay: shouldReduceMotion ? 0 : 1.05,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  className="font-montserrat font-normal text-sm sm:text-base text-[#FEFFFC]/75 leading-relaxed max-w-[440px] mx-auto text-center mb-0"
+                >
+                  {confirmationMessage}
+                </motion.p>
+
+                {/* Small yellow divider line between paragraph and closing line */}
+                <motion.div
+                  initial={{ opacity: shouldReduceMotion ? 1 : 0, scaleX: shouldReduceMotion ? 1 : 0 }}
+                  animate={{ opacity: 1, scaleX: 1 }}
+                  transition={{
+                    duration: shouldReduceMotion ? 0 : 0.3,
+                    delay: shouldReduceMotion ? 0 : 1.18,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  className="w-12 h-[2px] bg-[#D0FF00] rounded-full mx-auto my-5 sm:my-6 shrink-0 shadow-[0_0_8px_rgba(208,255,0,0.4)] origin-center"
+                  aria-hidden="true"
+                />
+
+                {/* 3. Bottom line, centered, in Cormorant Garamond Italic, white, slightly larger than paragraph */}
+                <motion.p
+                  initial={{ opacity: shouldReduceMotion ? 1 : 0, y: shouldReduceMotion ? 0 : 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: shouldReduceMotion ? 0 : 0.4,
+                    delay: shouldReduceMotion ? 0 : 1.28,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  className="font-cormorant italic text-lg sm:text-xl md:text-[22px] text-[#FEFFFC] font-medium tracking-wide text-center"
+                >
+                  "{confirmationClosing.replace(/^["']|["']$/g, '')}"
+                </motion.p>
+
+                {/* Action Buttons: Send Another Brief / WhatsApp Direct */}
+                <motion.div
+                  initial={{ opacity: shouldReduceMotion ? 1 : 0, y: shouldReduceMotion ? 0 : 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: shouldReduceMotion ? 0 : 0.4,
+                    delay: shouldReduceMotion ? 0 : 1.4,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                  className="mt-8 pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 w-full"
+                >
                   <button
                     type="button"
                     onClick={() => {
@@ -416,7 +622,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                         website: '',
                       });
                     }}
-                    className="px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-[#FEFFFC] text-xs font-semibold transition-colors cursor-pointer min-h-[44px] flex items-center justify-center"
+                    className="w-full sm:w-auto px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-[#FEFFFC] text-xs font-semibold font-montserrat transition-all duration-200 cursor-pointer min-h-[44px] flex items-center justify-center"
                   >
                     {successButtonText}
                   </button>
@@ -424,12 +630,12 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                     href={socials.whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-6 py-3 rounded-full bg-[#25D366]/20 border border-[#25D366]/40 hover:bg-[#25D366]/30 text-[#25D366] text-xs font-semibold transition-colors min-h-[44px] flex items-center gap-2"
+                    className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#25D366]/20 border border-[#25D366]/40 hover:bg-[#25D366]/30 text-[#25D366] text-xs font-semibold font-montserrat transition-colors min-h-[44px] flex items-center justify-center gap-2"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
                     <span>Follow up on WhatsApp</span>
                   </a>
-                </div>
+                </motion.div>
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit} noValidate className="space-y-5 sm:space-y-6">
@@ -579,20 +785,16 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
                 {/* Service Selection */}
                 <div>
-                  <label className="block text-xs font-medium text-white/70 mb-2 tracking-wide">
-                    {serviceLabel}
-                  </label>
-                  <select
+                  <CustomDropdown
+                    id="brief-service-required"
+                    name="service"
+                    label={serviceLabel}
+                    modalTitle="Select a Service"
+                    options={servicesOptions}
                     value={formData.service}
-                    onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-[#111] border border-white/10 focus:border-[#D0FF00] focus:ring-1 focus:ring-[#D0FF00] text-sm text-[#FEFFFC] outline-none transition-colors cursor-pointer min-h-[46px]"
-                  >
-                    {servicesOptions.map((opt) => (
-                      <option key={opt} value={opt} className="bg-[#111] text-white">
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, service: val })}
+                    required
+                  />
                 </div>
 
                 {/* Budget Range - 2 columns on mobile (3 rows for 6 items), 3 columns on desktop */}

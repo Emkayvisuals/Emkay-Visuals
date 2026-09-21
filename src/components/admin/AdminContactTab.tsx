@@ -19,6 +19,9 @@ import {
   AlertCircle,
   ExternalLink,
   Info,
+  Sparkles,
+  Palette,
+  RotateCcw,
 } from 'lucide-react';
 import {
   SocialPlatform,
@@ -30,6 +33,7 @@ import {
   getPlatformMeta,
   getResolvedSocialLinks,
 } from '../../lib/socialLinks';
+import { getServiceIconMeta } from '../CustomDropdown';
 
 const PLATFORMS_LIST: SocialPlatform[] = [
   'WhatsApp',
@@ -894,27 +898,137 @@ export const AdminContactTab: React.FC<AdminTabProps> = ({
           </div>
 
           {/* Service options */}
-          <div>
-            <label className="text-[10px] text-white/50 block mb-1">
-              Service Field Label &amp; Options (Comma separated)
-            </label>
-            <input
-              type="text"
-              value={contact.serviceLabel || ''}
-              onChange={(e) => handleContactChange('serviceLabel', e.target.value)}
-              className="w-full px-2.5 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-white outline-none focus:border-[#D0FF00] mb-2"
-            />
-            <textarea
-              rows={2}
-              value={(contact.servicesOptions || []).join(', ')}
-              onChange={(e) =>
-                handleContactChange(
-                  'servicesOptions',
-                  e.target.value.split(',').map((s) => s.trim()).filter(Boolean)
-                )
-              }
-              className="w-full px-2.5 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-white outline-none focus:border-[#D0FF00]"
-            />
+          <div className="p-3.5 rounded-xl bg-black/50 border border-white/10 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <label className="text-xs font-semibold text-[#FEFFFC] block">
+                  Service Required Dropdown Options
+                </label>
+                <p className="text-[11px] text-white/50">
+                  Custom dropdown on the public brief form automatically displays icons and colors for each option.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleContactChange(
+                      'servicesOptions',
+                      DEFAULT_PORTFOLIO_CONTENT.contact.servicesOptions
+                    )
+                  }
+                  className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-[11px] font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Reset to 9 default options"
+                >
+                  <RotateCcw className="w-3 h-3" /> Reset Defaults
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = contact.servicesOptions || DEFAULT_PORTFOLIO_CONTENT.contact.servicesOptions;
+                    handleContactChange('servicesOptions', [...current, 'New Service Discipline']);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-[#D0FF00] hover:bg-[#b8e600] text-black text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add Option
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] text-white/50 block mb-1">Field Label</label>
+              <input
+                type="text"
+                value={contact.serviceLabel || 'Service Required'}
+                onChange={(e) => handleContactChange('serviceLabel', e.target.value)}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-white outline-none focus:border-[#D0FF00]"
+              />
+            </div>
+
+            {/* List of service options */}
+            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+              {(contact.servicesOptions || DEFAULT_PORTFOLIO_CONTENT.contact.servicesOptions).map(
+                (opt: string, idx: number) => {
+                  const meta = getServiceIconMeta(opt);
+                  const IconComp = meta.icon;
+                  const currentList =
+                    contact.servicesOptions || DEFAULT_PORTFOLIO_CONTENT.contact.servicesOptions;
+
+                  return (
+                    <div
+                      key={idx}
+                      className="p-2.5 rounded-xl bg-black/60 border border-white/10 flex items-center justify-between gap-2 hover:border-white/20 transition-colors"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${meta.badgeBg}`}
+                          title={`Detected category: ${meta.type}`}
+                        >
+                          <IconComp className="w-3.5 h-3.5" />
+                        </div>
+                        <input
+                          type="text"
+                          value={opt}
+                          onChange={(e) => {
+                            const updated = [...currentList];
+                            updated[idx] = e.target.value;
+                            handleContactChange('servicesOptions', updated);
+                          }}
+                          className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-black/80 border border-white/10 text-xs text-white font-medium outline-none focus:border-[#D0FF00]"
+                          placeholder="e.g. Posters & Art Prints"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (idx === 0) return;
+                            const updated = [...currentList];
+                            const temp = updated[idx];
+                            updated[idx] = updated[idx - 1];
+                            updated[idx - 1] = temp;
+                            handleContactChange('servicesOptions', updated);
+                          }}
+                          disabled={idx === 0}
+                          className="p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/60 hover:text-white disabled:opacity-20 cursor-pointer"
+                          title="Move up"
+                        >
+                          <ArrowUp className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (idx === currentList.length - 1) return;
+                            const updated = [...currentList];
+                            const temp = updated[idx];
+                            updated[idx] = updated[idx + 1];
+                            updated[idx + 1] = temp;
+                            handleContactChange('servicesOptions', updated);
+                          }}
+                          disabled={idx === currentList.length - 1}
+                          className="p-1.5 rounded bg-white/5 hover:bg-white/10 text-white/60 hover:text-white disabled:opacity-20 cursor-pointer"
+                          title="Move down"
+                        >
+                          <ArrowDown className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = currentList.filter((_: any, i: number) => i !== idx);
+                            handleContactChange('servicesOptions', updated);
+                          }}
+                          className="p-1.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 cursor-pointer"
+                          title="Delete option"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -974,54 +1088,133 @@ export const AdminContactTab: React.FC<AdminTabProps> = ({
             />
           </div>
 
-          {/* Submission and Success states */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/5">
-            <div>
-              <label className="text-[10px] text-white/50 block mb-1">Submit Button Text</label>
-              <input
-                type="text"
-                value={contact.submitButtonText || ''}
-                onChange={(e) => handleContactChange('submitButtonText', e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-[#D0FF00] font-bold outline-none focus:border-[#D0FF00]"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-white/50 block mb-1">Submitting State Text</label>
-              <input
-                type="text"
-                value={contact.submittingButtonText || ''}
-                onChange={(e) => handleContactChange('submittingButtonText', e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-white/70 outline-none focus:border-[#D0FF00]"
-              />
-            </div>
+          {/* Submission and Success / Confirmation states */}
+          <div className="pt-3 border-t border-white/10 space-y-4">
+            <div className="p-4 rounded-xl bg-black/60 border border-white/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-semibold text-[#D0FF00] flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" /> Brief Sent Confirmation Card
+                  </h4>
+                  <p className="text-[11px] text-white/50 mt-0.5">
+                    Displayed with a smooth scale/fade animation and auto-scroll when a client submits a brief.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleContactChange('confirmationTitle', 'We Got The Brief!');
+                    handleContactChange(
+                      'confirmationMessage',
+                      "Thanks for trusting me with your project. I'll review the details and get back to you within 24/48 hours."
+                    );
+                    handleContactChange('confirmationClosing', "Ideas received. Let's create.");
+                    handleContactChange('sendAnotherButtonText', 'Send Another Brief');
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-[11px] font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Reset confirmation card text to defaults"
+                >
+                  <RotateCcw className="w-3 h-3" /> Reset Defaults
+                </button>
+              </div>
 
-            <div>
-              <label className="text-[10px] text-white/50 block mb-1">Success Title</label>
-              <input
-                type="text"
-                value={contact.successTitle || ''}
-                onChange={(e) => handleContactChange('successTitle', e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-emerald-400 font-bold outline-none focus:border-[#D0FF00]"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-white/50 block mb-1">Send Another Button Text</label>
-              <input
-                type="text"
-                value={contact.sendAnotherButtonText || ''}
-                onChange={(e) => handleContactChange('sendAnotherButtonText', e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-white outline-none focus:border-[#D0FF00]"
-              />
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="text-[10px] text-white/50 block mb-1">
+                    Confirmation Top Heading (Yellow / Montserrat Bold)
+                  </label>
+                  <input
+                    type="text"
+                    value={contact.confirmationTitle !== undefined ? contact.confirmationTitle : (contact.successTitle || 'We Got The Brief!')}
+                    onChange={(e) => {
+                      handleContactChange('confirmationTitle', e.target.value);
+                      handleContactChange('successTitle', e.target.value);
+                    }}
+                    placeholder="We Got The Brief!"
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-black/80 border border-white/10 text-xs text-[#D0FF00] font-bold outline-none focus:border-[#D0FF00]"
+                  />
+                </div>
 
-            <div className="sm:col-span-2">
-              <label className="text-[10px] text-white/50 block mb-1">Success Message Body</label>
-              <textarea
-                rows={2}
-                value={contact.successMessage || ''}
-                onChange={(e) => handleContactChange('successMessage', e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-white outline-none focus:border-[#D0FF00]"
-              />
+                <div className="sm:col-span-2">
+                  <label className="text-[10px] text-white/50 block mb-1">
+                    Confirmation Middle Paragraph (White/Grey at reduced opacity / Montserrat Regular)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={
+                      contact.confirmationMessage !== undefined
+                        ? contact.confirmationMessage
+                        : (contact.successMessage ||
+                          "Thanks for trusting me with your project. I'll review the details and get back to you within 24/48 hours.")
+                    }
+                    onChange={(e) => {
+                      handleContactChange('confirmationMessage', e.target.value);
+                      handleContactChange('successMessage', e.target.value);
+                    }}
+                    placeholder="Thanks for trusting me with your project. I'll review the details and get back to you within 24/48 hours."
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-black/80 border border-white/10 text-xs text-white outline-none focus:border-[#D0FF00]"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="text-[10px] text-white/50 block mb-1">
+                    Confirmation Bottom Line (White / Cormorant Garamond Italic)
+                  </label>
+                  <input
+                    type="text"
+                    value={contact.confirmationClosing !== undefined ? contact.confirmationClosing : "Ideas received. Let's create."}
+                    onChange={(e) => handleContactChange('confirmationClosing', e.target.value)}
+                    placeholder="Ideas received. Let's create."
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-black/80 border border-white/10 text-xs text-white italic font-serif outline-none focus:border-[#D0FF00]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-white/50 block mb-1">Submit Button Text</label>
+                  <input
+                    type="text"
+                    value={contact.submitButtonText || ''}
+                    onChange={(e) => handleContactChange('submitButtonText', e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-[#D0FF00] font-bold outline-none focus:border-[#D0FF00]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-white/50 block mb-1">Send Another Button Text</label>
+                  <input
+                    type="text"
+                    value={contact.sendAnotherButtonText || 'Send Another Brief'}
+                    onChange={(e) => handleContactChange('sendAnotherButtonText', e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-black/70 border border-white/10 text-xs text-white outline-none focus:border-[#D0FF00]"
+                  />
+                </div>
+              </div>
+
+              {/* Live Card Mini-Preview */}
+              <div className="mt-3 pt-3 border-t border-white/10">
+                <span className="text-[10px] uppercase tracking-wider text-white/40 block mb-2 font-mono">
+                  Live Card Preview
+                </span>
+                <div className="p-6 rounded-[22px] bg-[#0A0A0A] border border-white/15 shadow-[0_0_30px_rgba(129,22,224,0.2)] text-center flex flex-col items-center max-w-[420px] mx-auto relative overflow-hidden">
+                  <div className="w-12 h-12 rounded-full border-2 border-[#D0FF00] flex items-center justify-center text-[#D0FF00] mb-3 shadow-[0_0_15px_rgba(208,255,0,0.3)]">
+                    <svg viewBox="0 0 96 96" className="w-8 h-8" fill="none">
+                      <path d="M28 48 L42 62 L68 36" stroke="#D0FF00" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <h4 className="font-montserrat font-bold text-lg text-[#D0FF00] mb-2">
+                    {contact.confirmationTitle || contact.successTitle || 'We Got The Brief!'}
+                  </h4>
+                  <p className="font-montserrat font-normal text-xs text-[#FEFFFC]/75 leading-relaxed">
+                    {contact.confirmationMessage ||
+                      contact.successMessage ||
+                      "Thanks for trusting me with your project. I'll review the details and get back to you within 24/48 hours."}
+                  </p>
+                  <div className="w-8 h-[2px] bg-[#D0FF00] rounded-full my-3" />
+                  <p className="font-cormorant italic text-sm text-[#FEFFFC]">
+                    "{((contact.confirmationClosing || "Ideas received. Let's create.") as string).replace(/^["']|["']$/g, '')}"
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
