@@ -313,6 +313,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
     let emailSent = false;
     let firestoreSaved = false;
 
+    // 1. Send email notification via Web3Forms
     try {
       const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
@@ -321,7 +322,9 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           Accept: 'application/json',
         },
         body: JSON.stringify({
-          access_key: WEB3FORMS_ACCESS_KEY,
+          access_key: WEB3FORMS_ACCESS_KEY || 'f8ddaf24-13a1-40b4-8a3e-ae9f7dd15423',
+          to: 'emkayvisuals@gmail.com',
+          to_email: 'emkayvisuals@gmail.com',
           name: formData.name.trim(),
           email: formData.email.trim(),
           service: formData.service,
@@ -336,15 +339,19 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
       });
 
       const data = await response.json();
-      if (response.ok && data.success) {
+      // Verify Web3Forms actually returned success, not just that the network request completed
+      if (response.ok && data?.success === true) {
         emailSent = true;
+      } else {
+        console.error('Web3Forms did not return success:', data?.message || data);
       }
     } catch (err: unknown) {
       console.error('Web3Forms error:', err);
     }
 
+    // 2. Save to Firestore for the Project Briefs tab in /admin (Both must happen on every submission)
     try {
-      await saveProjectBrief({
+      const saved = await saveProjectBrief({
         name: formData.name.trim(),
         email: formData.email.trim(),
         service: formData.service,
@@ -353,7 +360,9 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
         message: formData.message.trim(),
         referenceLink: formData.referenceLink.trim(),
       });
-      firestoreSaved = true;
+      if (saved !== false) {
+        firestoreSaved = true;
+      }
     } catch (err: unknown) {
       console.error('Firestore save error:', err);
     }

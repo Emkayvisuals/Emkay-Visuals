@@ -7,7 +7,7 @@ import { doc, getDoc, setDoc, deleteDoc, onSnapshot, Unsubscribe } from "firebas
 import { db } from "../lib/firebase";
 import { useState, useEffect } from "react";
 
-export const WEB3FORMS_ACCESS_KEY = "YOUR_WEB3FORMS_ACCESS_KEY_HERE";
+export const WEB3FORMS_ACCESS_KEY = "f8ddaf24-13a1-40b4-8a3e-ae9f7dd15423";
 
 export interface ProjectGalleryImage {
   url: string;

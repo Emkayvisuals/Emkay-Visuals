@@ -89,7 +89,7 @@ export async function saveProjectBrief(brief: {
   deadline?: string;
   message: string;
   referenceLink?: string;
-}) {
+}): Promise<boolean> {
   const briefData = {
     name: brief.name,
     email: brief.email,
@@ -103,15 +103,20 @@ export async function saveProjectBrief(brief: {
     notes: '',
   };
 
+  let saved = false;
   try {
     await addDoc(collection(db, 'briefs'), briefData);
+    saved = true;
   } catch (err) {
     console.error("Error saving brief to briefs collection:", err);
   }
 
   try {
     await addDoc(collection(db, 'projectBriefs'), briefData);
+    saved = true;
   } catch (err) {
     console.error("Error saving brief to projectBriefs collection:", err);
   }
+
+  return saved;
 }
