@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   PORTFOLIO_CONTENT,
+  DEFAULT_PORTFOLIO_CONTENT,
   savePortfolioToFirestore,
   resetPortfolioToDefault,
+  deepMerge,
+  notifyListeners,
   PortfolioContentType,
 } from '../data/portfolioContent';
 import { auth, googleProvider, db } from '../lib/firebase';
@@ -29,9 +32,14 @@ import {
   GitCommit,
   AlertTriangle,
   ArrowLeft,
+  Download,
+  Loader2,
+  Check,
+  Database,
 } from 'lucide-react';
 import { AdminTabId } from './admin/types';
 import { SaveButton } from './admin/SaveButton';
+import { exportFirestoreBackup, downloadJsonFile } from '../lib/backup';
 
 // Tab components
 import { AdminAnalyticsTab } from './admin/AdminAnalyticsTab';
@@ -61,6 +69,7 @@ export const AdminDashboard: React.FC = () => {
   const [content, setContent] = useState<PortfolioContentType>(
     JSON.parse(JSON.stringify(PORTFOLIO_CONTENT))
   );
+  const [contentLoading, setContentLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState<AdminTabId>('analytics');
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -68,6 +77,10 @@ export const AdminDashboard: React.FC = () => {
 
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [briefsList, setBriefsList] = useState<any[]>([]);
+
+  // Backup state
+  const [backupState, setBackupState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [backupSummary, setBackupSummary] = useState<string | null>(null);
 
   // Check if there are unsaved edits
   const hasUnsavedChanges = JSON.stringify(content) !== initialContentJson;
@@ -83,6 +96,29 @@ export const AdminDashboard: React.FC = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
+
+  // Load live Firestore content immediately on mount to prevent stale/default overrides
+  useEffect(() => {
+    const loadLiveContent = async () => {
+      try {
+        const portfolioDocRef = doc(db, 'portfolio', 'content');
+        const portfolioSnap = await getDoc(portfolioDocRef);
+        if (portfolioSnap.exists()) {
+          const liveData = portfolioSnap.data();
+          const merged = deepMerge(DEFAULT_PORTFOLIO_CONTENT, liveData);
+          setContent(merged);
+          setInitialContentJson(JSON.stringify(merged));
+          Object.assign(PORTFOLIO_CONTENT, merged);
+          notifyListeners();
+        }
+      } catch (err) {
+        console.warn('Notice loading live content from Firestore:', err);
+      } finally {
+        setContentLoading(false);
+      }
+    };
+    loadLiveContent();
+  }, []);
 
   // Auth listener: ONLY emkayvisuals@gmail.com
   useEffect(() => {
@@ -107,6 +143,30 @@ export const AdminDashboard: React.FC = () => {
   }, []);
 
   const fetchAdminData = async () => {
+    // 1. Fetch live Portfolio Content from Firestore
+    try {
+      setContentLoading(true);
+      const portfolioDocRef = doc(db, 'portfolio', 'content');
+      const portfolioSnap = await getDoc(portfolioDocRef);
+      if (portfolioSnap.exists()) {
+        const liveData = portfolioSnap.data();
+        const merged = deepMerge(DEFAULT_PORTFOLIO_CONTENT, liveData);
+        setContent(merged);
+        setInitialContentJson(JSON.stringify(merged));
+        Object.assign(PORTFOLIO_CONTENT, merged);
+        notifyListeners();
+      } else {
+        // Document does not exist in Firestore yet: use defaults
+        setContent(JSON.parse(JSON.stringify(DEFAULT_PORTFOLIO_CONTENT)));
+        setInitialContentJson(JSON.stringify(DEFAULT_PORTFOLIO_CONTENT));
+      }
+    } catch (err) {
+      console.warn('Notice loading portfolio content from Firestore in fetchAdminData:', err);
+    } finally {
+      setContentLoading(false);
+    }
+
+    // 2. Fetch Analytics & Briefs
     try {
       const summarySnap = await getDoc(doc(db, 'analytics', 'summary'));
       if (summarySnap.exists()) {
@@ -192,6 +252,10 @@ export const AdminDashboard: React.FC = () => {
 
   // Standardized Save Handler: Saving -> Saved/Error
   const handleSaveSection = async (sectionName: string) => {
+    if (contentLoading) {
+      alert('Content is still loading from Firestore. Please wait a moment before saving.');
+      return;
+    }
     setSaveState('saving');
     setSavedSectionName(sectionName);
     try {
@@ -236,6 +300,25 @@ export const AdminDashboard: React.FC = () => {
       } catch (err) {
         alert('Failed to reset portfolio content.');
       }
+    }
+  };
+
+  const handleDownloadBackup = async () => {
+    setBackupState('loading');
+    try {
+      const { backup, fileName, summaryText } = await exportFirestoreBackup(content);
+      downloadJsonFile(backup, fileName);
+      setBackupSummary(summaryText);
+      setBackupState('success');
+      setTimeout(() => {
+        setBackupState('idle');
+      }, 4000);
+    } catch (err) {
+      console.error('Failed to export Firestore backup:', err);
+      setBackupState('error');
+      setTimeout(() => {
+        setBackupState('idle');
+      }, 4000);
     }
   };
 
@@ -373,7 +456,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <a
             href="/"
             target="_blank"
@@ -385,8 +468,35 @@ export const AdminDashboard: React.FC = () => {
 
           <button
             type="button"
+            onClick={handleDownloadBackup}
+            disabled={backupState === 'loading'}
+            className="px-3 sm:px-3.5 py-2 rounded-xl bg-[#D0FF00]/10 hover:bg-[#D0FF00]/20 text-[#D0FF00] text-xs font-semibold border border-[#D0FF00]/30 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            title="Download full JSON backup of all Firestore content"
+          >
+            {backupState === 'loading' ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span className="hidden sm:inline">Exporting...</span>
+                <span className="sm:hidden">...</span>
+              </>
+            ) : backupState === 'success' ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline text-emerald-400">Downloaded!</span>
+                <span className="sm:hidden text-emerald-400">Saved</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-3.5 h-3.5" />
+                <span>Download Backup</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
             onClick={handleReset}
-            className="px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold border border-red-500/30 transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="px-3 sm:px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold border border-red-500/30 transition-colors flex items-center gap-1.5 cursor-pointer"
             title="Reset to default content"
           >
             <RotateCcw className="w-3.5 h-3.5" /> Reset
@@ -482,6 +592,47 @@ export const AdminDashboard: React.FC = () => {
                   })}
               </div>
             </div>
+
+            {/* Database & Backup Card */}
+            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest flex items-center gap-1.5">
+                  <Database className="w-3 h-3 text-[#D0FF00]" /> Firestore Backup
+                </span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Database Connected" />
+              </div>
+              <p className="text-[11px] text-white/60 leading-relaxed">
+                Export all portfolio content, project briefs, visitor analytics, and media to a portable JSON file.
+              </p>
+              <button
+                type="button"
+                onClick={handleDownloadBackup}
+                disabled={backupState === 'loading'}
+                className="w-full py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white hover:text-[#D0FF00] text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {backupState === 'loading' ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Exporting Firestore...</span>
+                  </>
+                ) : backupState === 'success' ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-emerald-400">Backup Downloaded!</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5 text-[#D0FF00]" />
+                    <span>Download Backup</span>
+                  </>
+                )}
+              </button>
+              {backupSummary && (
+                <div className="text-[10px] text-emerald-400 font-mono text-center flex items-center justify-center gap-1">
+                  <Check className="w-3 h-3" /> Exported {backupSummary}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -497,14 +648,26 @@ export const AdminDashboard: React.FC = () => {
             />
           )}
 
-          {activeTab === 'seo' && (
-            <AdminSeoTab
-              content={content}
-              onChange={setContent}
-              onSave={handleSaveSection}
-              saveState={saveState}
-            />
-          )}
+          {contentLoading && activeTab !== 'analytics' && activeTab !== 'briefs' ? (
+            <div className="flex flex-col items-center justify-center py-24 space-y-3 bg-[#0a0a0a] rounded-3xl border border-white/10 text-center px-4">
+              <Loader2 className="w-8 h-8 animate-spin text-[#D0FF00]" />
+              <div>
+                <p className="text-sm font-semibold text-white">Loading live content from Firestore...</p>
+                <p className="text-xs text-white/50 mt-1">
+                  Retrieving your saved edits so nothing gets overwritten.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'seo' && (
+                <AdminSeoTab
+                  content={content}
+                  onChange={setContent}
+                  onSave={handleSaveSection}
+                  saveState={saveState}
+                />
+              )}
 
           {activeTab === 'preloader' && (
             <AdminPreloaderNavTab
@@ -603,6 +766,8 @@ export const AdminDashboard: React.FC = () => {
               onSave={handleSaveSection}
               saveState={saveState}
             />
+          )}
+            </>
           )}
         </div>
       </div>

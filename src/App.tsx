@@ -15,7 +15,12 @@ import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
 import { FloatingContactBar } from './components/FloatingContactBar';
 import { AdminDashboard } from './components/AdminDashboard';
-import { PORTFOLIO_CONTENT, loadPortfolioFromFirestore, subscribeToPortfolio } from './data/portfolioContent';
+import {
+  PORTFOLIO_CONTENT,
+  loadPortfolioFromFirestore,
+  initRealtimePortfolio,
+  subscribeToPortfolio,
+} from './data/portfolioContent';
 import { trackVisit } from './lib/analytics';
 
 export default function App() {
@@ -41,6 +46,7 @@ export default function App() {
 
   useEffect(() => {
     trackVisit();
+    initRealtimePortfolio();
     loadPortfolioFromFirestore();
     const unsubscribe = subscribeToPortfolio(() => {
       setTick(t => t + 1);

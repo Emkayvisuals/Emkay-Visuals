@@ -1071,35 +1071,73 @@ export const DEFAULT_PORTFOLIO_CONTENT = {
 export type PortfolioContentType = typeof DEFAULT_PORTFOLIO_CONTENT;
 
 /**
- * Deep merge helper: Merges `source` into `target` default object so that
- * any missing keys or empty strings fall back smoothly to the default values.
+ * Non-destructive merge helper:
+ * - Saved Firestore content (`source`) is the authoritative source of truth and NEVER overwritten.
+ * - Defaults (`target`) are ONLY used to provide fallback values for keys that are completely
+ *   missing (undefined or null) in the Firestore document (e.g. newly introduced schema fields).
+ * - Arrays in Firestore (projects, services, testimonials, stats, process, etc.) are kept
+ *   in full as saved by the user. They are NEVER positionally merged or overwritten with defaults.
+ * - Empty strings (""), false booleans, and 0 numbers in Firestore are strictly preserved.
  */
 export function deepMerge(target: any, source: any): any {
-  if (!source || typeof source !== 'object') return target;
-  if (Array.isArray(target) && Array.isArray(source)) {
-    return source.map((item, idx) => {
-      if (typeof item === 'object' && item !== null && target[idx]) {
-        return deepMerge(target[idx], item);
+  if (source === undefined || source === null) {
+    return target !== undefined && target !== null ? JSON.parse(JSON.stringify(target)) : target;
+  }
+  if (typeof source !== 'object') {
+    return source;
+  }
+
+  // Arrays: Saved Firestore arrays are authoritative!
+  if (Array.isArray(source)) {
+    if (!Array.isArray(target) || target.length === 0) {
+      return [...source];
+    }
+    const templateItem = target[0];
+    if (templateItem && typeof templateItem === 'object' && !Array.isArray(templateItem)) {
+      return source.map((item) => {
+        if (item && typeof item === 'object' && !Array.isArray(item)) {
+          const mergedItem = { ...item };
+          // Only add schema keys that are completely missing (undefined) in the saved item
+          for (const k of Object.keys(templateItem)) {
+            if (mergedItem[k] === undefined) {
+              mergedItem[k] = templateItem[k];
+            }
+          }
+          return mergedItem;
+        }
+        return item;
+      });
+    }
+    return [...source];
+  }
+
+  // Objects: start with all saved keys from source
+  const result: any = { ...source };
+
+  // For every key in the defaults target, only supply it if missing in source
+  if (target && typeof target === 'object' && !Array.isArray(target)) {
+    for (const key of Object.keys(target)) {
+      if (source[key] === undefined || source[key] === null) {
+        result[key] =
+          target[key] !== undefined && target[key] !== null
+            ? JSON.parse(JSON.stringify(target[key]))
+            : target[key];
+      } else if (
+        typeof target[key] === 'object' &&
+        target[key] !== null &&
+        !Array.isArray(target[key]) &&
+        typeof source[key] === 'object' &&
+        source[key] !== null &&
+        !Array.isArray(source[key])
+      ) {
+        result[key] = deepMerge(target[key], source[key]);
+      } else {
+        // Primitive or array: keep the saved Firestore value
+        result[key] = source[key];
       }
-      return item;
-    });
-  }
-  const result = { ...target };
-  for (const key of Object.keys(target)) {
-    if (source[key] === undefined || source[key] === null) {
-      result[key] = target[key];
-    } else if (typeof target[key] === 'object' && target[key] !== null && !Array.isArray(target[key])) {
-      result[key] = deepMerge(target[key], source[key]);
-    } else {
-      result[key] = source[key];
     }
   }
-  // Include any extra source keys not in target
-  for (const key of Object.keys(source)) {
-    if (result[key] === undefined && source[key] !== undefined) {
-      result[key] = source[key];
-    }
-  }
+
   return result;
 }
 
@@ -1184,7 +1222,7 @@ export function initRealtimePortfolio() {
 /**
  * One-time load from Firestore (compatible with existing code)
  */
-export async function loadPortfolioFromFirestore() {
+export async function loadPortfolioFromFirestore(): Promise<PortfolioContentType | null> {
   try {
     const docRef = doc(db, 'portfolio', 'content');
     const snap = await getDoc(docRef);
@@ -1193,20 +1231,23 @@ export async function loadPortfolioFromFirestore() {
       const merged = deepMerge(DEFAULT_PORTFOLIO_CONTENT, data);
       Object.assign(PORTFOLIO_CONTENT, merged);
       notifyListeners();
+      return merged;
     }
   } catch (err) {
     console.log('Using local portfolio fallback (offline or empty):', err);
   }
+  return null;
 }
 
 /**
  * Saves changes to Firestore, cleans undefined fields, and notifies listeners.
+ * Uses { merge: true } so existing unmanaged fields are never deleted.
  */
 export async function savePortfolioToFirestore(newData: PortfolioContentType) {
   try {
     const docRef = doc(db, 'portfolio', 'content');
     const cleaned = cleanForFirestore(newData);
-    await setDoc(docRef, cleaned);
+    await setDoc(docRef, cleaned, { merge: true });
     Object.assign(PORTFOLIO_CONTENT, newData);
     notifyListeners();
     return true;
