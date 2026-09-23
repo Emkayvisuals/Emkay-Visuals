@@ -1,4 +1,4 @@
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc } from 'firebase/firestore';
 import { storage, db } from '../lib/firebase';
 
@@ -28,8 +28,17 @@ export interface UploadResult {
   stats: ImageProcessingStats;
 }
 
+export type UploadStep = 'compressing' | 'uploading' | 'completed';
+
+export interface UploadProgress {
+  step: UploadStep;
+  percent: number; // 0 to 100
+  stage: string;   // Human-readable status message
+  bytesTransferred?: number;
+  totalBytes?: number;
+}
+
 const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15 MB limit
-const FIRESTORE_DOC_MAX_BYTES = 700 * 1024; // strictly keep under 700 KB
 
 export function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -62,7 +71,7 @@ export function validateImageFile(file: File): { valid: boolean; error?: string 
 }
 
 /**
- * Calculates target dimensions for canvas resizing based on image preset:
+ * Calculates target dimensions for resizing based on image preset:
  * - projects: max 1600px wide
  * - profile photos: 800px max dimension
  * - Open Graph: 1200x630
@@ -147,7 +156,233 @@ export function calculateTargetDimensions(
 }
 
 /**
- * Loads an image file into an HTMLImageElement in the browser.
+ * Inline Web Worker source code:
+ * Offloads decoding, downsampling, and hardware-accelerated WebP encoding
+ * to a background thread so the UI remains 100% fluid and responsive.
+ */
+const WORKER_CODE = `
+self.onmessage = async (e) => {
+  const { id, file, targetWidth, targetHeight, cropToOg, quality } = e.data;
+  try {
+    let blob;
+
+    if (cropToOg) {
+      // Decode image first to get aspect ratio
+      const imgBitmap = await createImageBitmap(file);
+      const origW = imgBitmap.width;
+      const origH = imgBitmap.height;
+
+      const canvas = new OffscreenCanvas(targetWidth, targetHeight);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not create offscreen canvas context');
+
+      ctx.fillStyle = '#050505';
+      ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+      // Center crop & cover into 1200x630
+      const scale = Math.max(targetWidth / origW, targetHeight / origH);
+      const sw = origW * scale;
+      const sh = origH * scale;
+      const dx = (targetWidth - sw) / 2;
+      const dy = (targetHeight - sh) / 2;
+
+      ctx.drawImage(imgBitmap, dx, dy, sw, sh);
+      imgBitmap.close();
+
+      // Encode once to WebP
+      blob = await canvas.convertToBlob({
+        type: 'image/webp',
+        quality: quality || 0.82,
+      });
+    } else {
+      // RESIZE FIRST, ENCODE ONCE:
+      // Decode directly into the target resolution in hardware decoder
+      let bitmap;
+      try {
+        bitmap = await createImageBitmap(file, {
+          resizeWidth: targetWidth,
+          resizeHeight: targetHeight,
+          resizeQuality: 'high',
+        });
+      } catch (resizeErr) {
+        bitmap = await createImageBitmap(file);
+      }
+
+      const canvas = new OffscreenCanvas(targetWidth, targetHeight);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not create offscreen canvas context');
+
+      ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
+      bitmap.close();
+
+      // Encode once using browser native hardware-accelerated WebP encoder
+      blob = await canvas.convertToBlob({
+        type: 'image/webp',
+        quality: quality || 0.82,
+      });
+    }
+
+    self.postMessage({
+      id,
+      success: true,
+      blob,
+      width: targetWidth,
+      height: targetHeight,
+    });
+  } catch (err) {
+    self.postMessage({
+      id,
+      success: false,
+      error: (err && err.message) || 'Image conversion failed in background worker',
+    });
+  }
+};
+`;
+
+let sharedWorker: Worker | null = null;
+let sharedWorkerUrl: string | null = null;
+
+function getSharedWorker(): Worker | null {
+  if (typeof window === 'undefined' || typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined') {
+    return null;
+  }
+  if (!sharedWorker) {
+    try {
+      const blob = new Blob([WORKER_CODE], { type: 'application/javascript' });
+      sharedWorkerUrl = URL.createObjectURL(blob);
+      sharedWorker = new Worker(sharedWorkerUrl);
+    } catch (err) {
+      console.warn('Worker creation unavailable, using main-thread fallback:', err);
+      sharedWorker = null;
+    }
+  }
+  return sharedWorker;
+}
+
+/**
+ * Fallback processing function if Web Worker / OffscreenCanvas is unavailable.
+ * Uses native createImageBitmap with resize options and canvas.toBlob (hardware-accelerated WebP).
+ */
+async function processOnMainThread(
+  file: File,
+  targetWidth: number,
+  targetHeight: number,
+  cropToOg?: boolean,
+  quality = 0.82
+): Promise<Blob> {
+  const canvas = document.createElement('canvas');
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Failed to obtain canvas context');
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+
+  if (cropToOg) {
+    let imgBitmap: ImageBitmap | HTMLImageElement;
+    if (typeof createImageBitmap === 'function') {
+      imgBitmap = await createImageBitmap(file);
+    } else {
+      imgBitmap = await loadImageFromFile(file);
+    }
+
+    const origW = (imgBitmap as ImageBitmap).width || (imgBitmap as HTMLImageElement).naturalWidth;
+    const origH = (imgBitmap as ImageBitmap).height || (imgBitmap as HTMLImageElement).naturalHeight;
+
+    ctx.fillStyle = '#050505';
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+    const scale = Math.max(targetWidth / origW, targetHeight / origH);
+    const sw = origW * scale;
+    const sh = origH * scale;
+    const dx = (targetWidth - sw) / 2;
+    const dy = (targetHeight - sh) / 2;
+
+    ctx.drawImage(imgBitmap, dx, dy, sw, sh);
+    if ('close' in imgBitmap && typeof imgBitmap.close === 'function') {
+      imgBitmap.close();
+    }
+  } else {
+    // Resize first during decode:
+    let imgBitmap: ImageBitmap | HTMLImageElement;
+    if (typeof createImageBitmap === 'function') {
+      try {
+        imgBitmap = await createImageBitmap(file, {
+          resizeWidth: targetWidth,
+          resizeHeight: targetHeight,
+          resizeQuality: 'high',
+        });
+      } catch {
+        imgBitmap = await createImageBitmap(file);
+      }
+    } else {
+      imgBitmap = await loadImageFromFile(file);
+    }
+
+    ctx.drawImage(imgBitmap, 0, 0, targetWidth, targetHeight);
+    if ('close' in imgBitmap && typeof imgBitmap.close === 'function') {
+      imgBitmap.close();
+    }
+  }
+
+  // Encode ONCE with browser native WebP encoder
+  return await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (b) => {
+        if (b) resolve(b);
+        else reject(new Error('Native WebP encoding failed in canvas'));
+      },
+      'image/webp',
+      quality
+    );
+  });
+}
+
+function processWithWorker(
+  file: File,
+  targetWidth: number,
+  targetHeight: number,
+  cropToOg?: boolean,
+  quality = 0.82
+): Promise<Blob> {
+  const worker = getSharedWorker();
+  if (!worker) {
+    return processOnMainThread(file, targetWidth, targetHeight, cropToOg, quality);
+  }
+
+  return new Promise((resolve, reject) => {
+    const id = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const timeout = setTimeout(() => {
+      worker.removeEventListener('message', handleMessage);
+      // Fall back to main thread if worker doesn't respond
+      processOnMainThread(file, targetWidth, targetHeight, cropToOg, quality)
+        .then(resolve)
+        .catch(reject);
+    }, 12000);
+
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data && e.data.id === id) {
+        clearTimeout(timeout);
+        worker.removeEventListener('message', handleMessage);
+        if (e.data.success && e.data.blob) {
+          resolve(e.data.blob);
+        } else {
+          // If worker fails, fallback to main thread
+          processOnMainThread(file, targetWidth, targetHeight, cropToOg, quality)
+            .then(resolve)
+            .catch(reject);
+        }
+      }
+    };
+
+    worker.addEventListener('message', handleMessage);
+    worker.postMessage({ id, file, targetWidth, targetHeight, cropToOg, quality });
+  });
+}
+
+/**
+ * Loads an image file into an HTMLImageElement in the browser (fallback).
  */
 function loadImageFromFile(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -159,7 +394,7 @@ function loadImageFromFile(file: File): Promise<HTMLImageElement> {
       resolve(img);
     };
 
-    img.onerror = (e) => {
+    img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
       reject(new Error('Failed to read image data in browser'));
     };
@@ -169,98 +404,77 @@ function loadImageFromFile(file: File): Promise<HTMLImageElement> {
 }
 
 /**
- * Converts any uploaded image to WebP with resizing applied via browser Canvas.
- * Handles Open Graph cover scaling, favicon square scaling, and general ratio scaling.
- * Dynamically lowers quality if necessary to guarantee the blob is strictly under 700 KB.
+ * Helper to convert Blob to base64 (only executed on fallback paths).
+ */
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      resolve(result.replace(/^data:image\/[a-z]+;base64,/, ''));
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
+ * Converts any uploaded image to WebP with resizing applied BEFORE encoding.
+ * Offloads heavy work to a background Web Worker so the main UI never freezes.
+ * Uses browser-native hardware-accelerated WebP encoding with a single pass.
  */
 export async function convertToWebP(
   file: File,
   preset: ImagePreset,
-  initialQuality = 0.8
-): Promise<{ blob: Blob; base64: string; dataUrl: string; stats: ImageProcessingStats }> {
+  initialQuality = 0.82,
+  onProgress?: (progress: UploadProgress) => void
+): Promise<{ blob: Blob; stats: ImageProcessingStats }> {
   const validation = validateImageFile(file);
   if (!validation.valid) {
     throw new Error(validation.error);
   }
 
-  const img = await loadImageFromFile(file);
+  onProgress?.({
+    step: 'compressing',
+    percent: 25,
+    stage: 'Inspecting dimensions & preparing downsampling...',
+  });
+
+  // Fast dimension probe without allocating full RGBA main-thread buffers
+  let origWidth = 1920;
+  let origHeight = 1080;
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const probe = await createImageBitmap(file);
+      origWidth = probe.width;
+      origHeight = probe.height;
+      probe.close(); // Immediate memory release
+    } catch {
+      const img = await loadImageFromFile(file);
+      origWidth = img.naturalWidth || img.width;
+      origHeight = img.naturalHeight || img.height;
+    }
+  } else {
+    const img = await loadImageFromFile(file);
+    origWidth = img.naturalWidth || img.width;
+    origHeight = img.naturalHeight || img.height;
+  }
+
   const { width: targetWidth, height: targetHeight, cropToOg } = calculateTargetDimensions(
-    img.naturalWidth || img.width,
-    img.naturalHeight || img.height,
+    origWidth,
+    origHeight,
     preset
   );
 
-  const canvas = document.createElement('canvas');
-  canvas.width = targetWidth;
-  canvas.height = targetHeight;
-  const ctx = canvas.getContext('2d');
-
-  if (!ctx) {
-    throw new Error('Canvas 2D context could not be created');
-  }
-
-  // High quality interpolation
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-
-  if (cropToOg) {
-    // Fill background with dark tone in case aspect ratio is different
-    ctx.fillStyle = '#050505';
-    ctx.fillRect(0, 0, targetWidth, targetHeight);
-
-    // Center and cover image into 1200x630
-    const imgW = img.naturalWidth || img.width;
-    const imgH = img.naturalHeight || img.height;
-    const scale = Math.max(targetWidth / imgW, targetHeight / imgH);
-    const sw = imgW * scale;
-    const sh = imgH * scale;
-    const dx = (targetWidth - sw) / 2;
-    const dy = (targetHeight - sh) / 2;
-    ctx.drawImage(img, dx, dy, sw, sh);
-  } else if (preset === 'favicon') {
-    // Center square
-    ctx.clearRect(0, 0, targetWidth, targetHeight);
-    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-  } else {
-    ctx.clearRect(0, 0, targetWidth, targetHeight);
-    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-  }
-
-  // Multi-pass encoder to ensure WebP blob is strictly <= 700 KB (Firestore requirement)
-  let quality = initialQuality;
-  let blob: Blob | null = null;
-
-  for (let attempt = 0; attempt < 4; attempt++) {
-    blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob((b) => resolve(b), 'image/webp', quality);
-    });
-
-    if (!blob) {
-      throw new Error('WebP encoding failed in browser canvas');
-    }
-
-    // If strictly under 700 KB, we are good!
-    if (blob.size <= FIRESTORE_DOC_MAX_BYTES) {
-      break;
-    }
-
-    // Decrease quality slightly for next attempt
-    quality = Math.max(0.4, quality - 0.15);
-  }
-
-  if (!blob) {
-    throw new Error('Failed to create WebP image blob');
-  }
-
-  // Convert blob to base64 and data URL
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob!);
+  onProgress?.({
+    step: 'compressing',
+    percent: 55,
+    stage: `Downsampling to ${targetWidth}x${targetHeight} & encoding WebP in background...`,
   });
 
-  const base64 = dataUrl.replace(/^data:image\/[a-z]+;base64,/, '');
+  // RESIZE FIRST, ENCODE ONCE:
+  // Runs in background worker off the main thread with native WebP encoding
+  const blob = await processWithWorker(file, targetWidth, targetHeight, cropToOg, initialQuality);
 
   const originalSizeBytes = file.size;
   const newSizeBytes = blob.size;
@@ -277,24 +491,28 @@ export async function convertToWebP(
     format: 'image/webp',
   };
 
-  return { blob, base64, dataUrl, stats };
+  onProgress?.({
+    step: 'compressing',
+    percent: 100,
+    stage: `Optimized to ${stats.newSizeFormatted} (${stats.compressionRatio})`,
+  });
+
+  return { blob, stats };
 }
 
 /**
  * Uploads the converted WebP image.
- * 1. Tries Firebase Storage first (public download URL).
- * 2. If Firebase Storage is unavailable or fails, falls back to storing each converted image
- *    as its own Firestore document in the 'media' collection (strictly under 700 KB)
- *    and serves it through server route /media/:id with long cache headers.
- * 3. Also tries server fallback /api/upload-media if client-side Firestore is unauthenticated.
+ * 1. Primary destination: Firebase Storage (using uploadBytesResumable for real-time progress events).
+ * 2. Compresses before upload to the preset target size, resulting in tiny binary uploads.
+ * 3. Never converts to Base64 unless falling back to server / Firestore fallback routes.
  */
 export async function uploadImage(
   file: File,
   preset: ImagePreset,
-  onProgress?: (stage: string) => void
+  onProgress?: (progress: UploadProgress) => void
 ): Promise<UploadResult> {
-  onProgress?.('Converting to WebP & resizing...');
-  const { blob, base64, dataUrl, stats } = await convertToWebP(file, preset);
+  // Step 1: Compress & resize off the main thread
+  const { blob, stats } = await convertToWebP(file, preset, 0.82, onProgress);
 
   const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/\.[^.]+$/, '');
   const timestamp = Date.now();
@@ -302,19 +520,57 @@ export async function uploadImage(
   const mediaId = `img_${timestamp}_${randomSuffix}`;
   const storagePath = `media/${mediaId}_${cleanName}.webp`;
 
-  // ==========================================
-  // ATTEMPT 1: Firebase Storage (preferred)
-  // ==========================================
-  onProgress?.('Checking Firebase Storage availability...');
+  // Step 2: Upload to Firebase Storage with real-time resumable progress events
+  onProgress?.({
+    step: 'uploading',
+    percent: 0,
+    stage: 'Connecting to Firebase Storage...',
+    totalBytes: blob.size,
+  });
+
   try {
     const storageRef = ref(storage, storagePath);
-    await uploadBytes(storageRef, blob, {
+    const uploadTask = uploadBytesResumable(storageRef, blob, {
       contentType: 'image/webp',
       cacheControl: 'public, max-age=31536000, immutable',
     });
 
-    const downloadUrl = await getDownloadURL(storageRef);
+    const downloadUrl = await new Promise<string>((resolve, reject) => {
+      uploadTask.on(
+        'state_changed',
+        (snapshot) => {
+          if (snapshot.totalBytes > 0) {
+            const percent = Math.min(99, Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100));
+            onProgress?.({
+              step: 'uploading',
+              percent,
+              stage: `Uploading to Firebase Storage: ${percent}% (${formatBytes(snapshot.bytesTransferred)} / ${formatBytes(snapshot.totalBytes)})`,
+              bytesTransferred: snapshot.bytesTransferred,
+              totalBytes: snapshot.totalBytes,
+            });
+          }
+        },
+        (storageErr) => {
+          reject(storageErr);
+        },
+        async () => {
+          try {
+            const url = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(url);
+          } catch (err) {
+            reject(err);
+          }
+        }
+      );
+    });
+
     if (downloadUrl && downloadUrl.startsWith('http')) {
+      onProgress?.({
+        step: 'completed',
+        percent: 100,
+        stage: 'Upload complete! Stored in Firebase Storage',
+      });
+
       return {
         url: downloadUrl,
         method: 'firebase_storage',
@@ -325,46 +581,21 @@ export async function uploadImage(
     console.warn(
       'Firebase Storage unavailable or encountered error:',
       storageError?.message || storageError,
-      '-> Falling back to individual Firestore media document with /media/:id route.'
+      '-> Falling back to server media storage (/api/upload-media)...'
     );
   }
 
   // ==========================================
-  // ATTEMPT 2: Firestore Document (Fallback)
-  // Store each converted image as its own Firestore document in collection 'media'
-  // (strictly under 700 KB) and serve it through /media/:id
+  // FALLBACK 1: Resilient server endpoint (/api/upload-media)
   // ==========================================
-  onProgress?.('Storing converted image in Firestore media document...');
-  try {
-    const mediaDocRef = doc(db, 'media', mediaId);
-    await setDoc(mediaDocRef, {
-      base64,
-      contentType: 'image/webp',
-      name: `${cleanName}.webp`,
-      sizeBytes: blob.size,
-      width: stats.width,
-      height: stats.height,
-      createdAt: new Date().toISOString(),
-    });
+  onProgress?.({
+    step: 'uploading',
+    percent: 40,
+    stage: 'Uploading to server media storage...',
+  });
 
-    return {
-      url: `/media/${mediaId}`,
-      method: 'firestore_document',
-      stats,
-    };
-  } catch (firestoreError: any) {
-    console.warn(
-      'Client Firestore write encountered error (likely unauthenticated):',
-      firestoreError?.message || firestoreError,
-      '-> Falling back to /api/upload-media server route...'
-    );
-  }
-
-  // ==========================================
-  // ATTEMPT 3: Server Route fallback (/api/upload-media)
-  // ==========================================
-  onProgress?.('Uploading to server media storage...');
   try {
+    const base64 = await blobToBase64(blob);
     const response = await fetch('/api/upload-media', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -377,6 +608,12 @@ export async function uploadImage(
 
     if (response.ok) {
       const data = await response.json();
+      onProgress?.({
+        step: 'completed',
+        percent: 100,
+        stage: 'Upload complete! Stored via server route',
+      });
+
       return {
         url: data.url || `/media/${mediaId}`,
         method: 'firestore_document',
@@ -384,12 +621,50 @@ export async function uploadImage(
       };
     }
   } catch (serverErr) {
-    console.error('Server media route failed:', serverErr);
+    console.warn('Server media route fallback failed:', serverErr);
   }
 
-  // If all remote options failed, fallback to local dataUrl to avoid breaking user workflow
+  // ==========================================
+  // FALLBACK 2: Firestore Document (media collection)
+  // ==========================================
+  onProgress?.({
+    step: 'uploading',
+    percent: 70,
+    stage: 'Saving to Firestore media collection...',
+  });
+
+  try {
+    const base64 = await blobToBase64(blob);
+    const mediaDocRef = doc(db, 'media', mediaId);
+    await setDoc(mediaDocRef, {
+      base64,
+      contentType: 'image/webp',
+      name: `${cleanName}.webp`,
+      sizeBytes: blob.size,
+      width: stats.width,
+      height: stats.height,
+      createdAt: new Date().toISOString(),
+    });
+
+    onProgress?.({
+      step: 'completed',
+      percent: 100,
+      stage: 'Upload complete!',
+    });
+
+    return {
+      url: `/media/${mediaId}`,
+      method: 'firestore_document',
+      stats,
+    };
+  } catch (firestoreError) {
+    console.warn('Client Firestore media document save failed:', firestoreError);
+  }
+
+  // If all persistent remotes failed, return local object URL
+  const localUrl = URL.createObjectURL(blob);
   return {
-    url: dataUrl,
+    url: localUrl,
     method: 'firestore_document',
     stats,
   };

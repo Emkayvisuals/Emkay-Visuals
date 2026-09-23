@@ -13,6 +13,8 @@ import {
 import {
   ImagePreset,
   ImageProcessingStats,
+  UploadProgress,
+  formatBytes,
   uploadImage,
   validateImageFile,
 } from '../../utils/imageConverter';
@@ -48,7 +50,7 @@ export const ImageUploadControl: React.FC<ImageUploadControlProps> = ({
 }) => {
   const [altText, setAltText] = useState(imageAlt);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [processingStage, setProcessingStage] = useState('');
+  const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastStats, setLastStats] = useState<ImageProcessingStats | null>(null);
   const [storageMethod, setStorageMethod] = useState<'firebase_storage' | 'firestore_document' | null>(null);
@@ -78,15 +80,20 @@ export const ImageUploadControl: React.FC<ImageUploadControlProps> = ({
 
     try {
       setIsProcessing(true);
-      setProcessingStage('Optimizing & converting to WebP...');
+      setProgress({
+        step: 'compressing',
+        percent: 15,
+        stage: 'Inspecting dimensions & preparing downsampling...',
+      });
 
-      const result = await uploadImage(file, preset, (stage) => {
-        setProcessingStage(stage);
+      const result = await uploadImage(file, preset, (prog) => {
+        setProgress(prog);
       });
 
       setLastStats(result.stats);
       setStorageMethod(result.method);
       setIsProcessing(false);
+      setProgress(null);
 
       // Default alt text if none provided
       const cleanName = file.name
@@ -101,6 +108,7 @@ export const ImageUploadControl: React.FC<ImageUploadControlProps> = ({
       console.error('Image upload failed:', err);
       setError(err?.message || 'Failed to process image');
       setIsProcessing(false);
+      setProgress(null);
     }
   };
 
@@ -215,13 +223,72 @@ export const ImageUploadControl: React.FC<ImageUploadControlProps> = ({
         </div>
       )}
 
-      {/* Processing State Indicator */}
-      {isProcessing && (
-        <div className="mb-3 p-3.5 rounded-xl bg-[#D0FF00]/10 border border-[#D0FF00]/30 text-xs text-[#D0FF00] flex items-center gap-3 animate-pulse">
-          <RefreshCw className="w-4 h-4 animate-spin text-[#D0FF00] shrink-0" />
-          <div>
-            <p className="font-bold text-[#D0FF00]">Converting to WebP & Optimizing...</p>
-            <p className="text-[11px] text-white/70">{processingStage || 'Processing file...'}</p>
+      {/* Processing State Indicator with Real Multi-Step Progress Bar */}
+      {isProcessing && progress && (
+        <div className="mb-3 p-4 rounded-xl bg-[#0d0d0d] border border-white/10 shadow-lg space-y-3">
+          {/* Step Badges */}
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <span
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide transition-colors ${
+                  progress.step === 'compressing'
+                    ? 'bg-[#D0FF00]/15 text-[#D0FF00] border border-[#D0FF00]/30'
+                    : progress.step === 'uploading' || progress.step === 'completed'
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-white/5 text-white/40'
+                }`}
+              >
+                {progress.step === 'uploading' || progress.step === 'completed' ? (
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                ) : (
+                  <RefreshCw className="w-3 h-3 animate-spin text-[#D0FF00]" />
+                )}
+                1. Compressing
+              </span>
+
+              <span className="text-white/20 font-bold">→</span>
+
+              <span
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide transition-colors ${
+                  progress.step === 'uploading'
+                    ? 'bg-[#D0FF00]/15 text-[#D0FF00] border border-[#D0FF00]/30'
+                    : progress.step === 'completed'
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-white/5 text-white/40'
+                }`}
+              >
+                {progress.step === 'completed' ? (
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                ) : progress.step === 'uploading' ? (
+                  <UploadCloud className="w-3 h-3 animate-pulse text-[#D0FF00]" />
+                ) : (
+                  <UploadCloud className="w-3 h-3 text-white/30" />
+                )}
+                2. Uploading
+              </span>
+            </div>
+
+            <span className="text-xs font-mono font-bold text-[#D0FF00]">
+              {progress.percent}%
+            </span>
+          </div>
+
+          {/* Actual Progress Bar */}
+          <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-[#D0FF00] to-emerald-400 rounded-full transition-all duration-150 ease-out"
+              style={{ width: `${Math.max(4, Math.min(100, progress.percent))}%` }}
+            />
+          </div>
+
+          {/* Status Message */}
+          <div className="flex items-center justify-between text-[11px] text-white/60">
+            <span className="truncate pr-2">{progress.stage}</span>
+            {progress.totalBytes && progress.bytesTransferred !== undefined && (
+              <span className="shrink-0 font-mono text-white/40 text-[10px]">
+                {formatBytes(progress.bytesTransferred)} / {formatBytes(progress.totalBytes)}
+              </span>
+            )}
           </div>
         </div>
       )}
