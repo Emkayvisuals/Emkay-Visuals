@@ -536,6 +536,8 @@ export const DEFAULT_PORTFOLIO_CONTENT = {
     'Photo Manipulation',
     'Sports Design',
     'Motion Graphics',
+    'Vector/Cartoon Illustration',
+    'Product Design',
   ] as string[],
 
   projects: [
@@ -1131,6 +1133,20 @@ export function deepMerge(target: any, source: any): any {
         !Array.isArray(source[key])
       ) {
         result[key] = deepMerge(target[key], source[key]);
+      } else if (
+        key === 'categories' &&
+        Array.isArray(source[key]) &&
+        Array.isArray(target[key])
+      ) {
+        const existingCats = source[key] as string[];
+        const targetCats = target[key] as string[];
+        const combined = [...existingCats];
+        for (const cat of targetCats) {
+          if (!combined.some((c) => c.toLowerCase() === cat.toLowerCase())) {
+            combined.push(cat);
+          }
+        }
+        result[key] = combined;
       } else {
         // Primitive or array: keep the saved Firestore value
         result[key] = source[key];

@@ -58,7 +58,6 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
   const headingMain = projectsSection?.headingMain || 'Featured Design';
   const headingAccent = projectsSection?.headingAccent || 'Portfolio';
   const filterLabel = projectsSection?.filterLabel || 'Filter:';
-  const clientLabel = projectsSection?.clientLabel || 'Client:';
   const viewProjectText = projectsSection?.viewProjectText || 'View Project';
 
   const visibleProjects = (projects || []).filter((p) => p.visible !== false);
@@ -344,12 +343,6 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
                         <h3 className="font-montserrat font-medium italic text-lg sm:text-xl text-[#D0FF00] tracking-tight line-clamp-1 mb-1">
                           {project.title}
                         </h3>
-                        {project.client && project.client.trim() && (
-                          <p className="text-xs text-white/50 mb-2.5 font-normal">
-                            {clientLabel}{' '}
-                            <span className="text-white/80 font-medium">{project.client}</span>
-                          </p>
-                        )}
                         {project.description && project.description.trim() && (
                           <p className="text-xs sm:text-sm text-white/65 line-clamp-2 leading-relaxed font-normal">
                             {project.description}

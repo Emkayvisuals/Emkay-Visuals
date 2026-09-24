@@ -18,6 +18,7 @@ import {
   Image as ImageIcon,
   Film,
   Layers,
+  X,
 } from 'lucide-react';
 import { ProjectItem, ProjectGalleryImage } from '../../data/portfolioContent';
 import { ImageUploadControl } from './ImageUploadControl';
@@ -61,6 +62,8 @@ export const AdminProjectsTab: React.FC<AdminTabProps> = ({
     'Photo Manipulation',
     'Sports Design',
     'Motion Graphics',
+    'Vector/Cartoon Illustration',
+    'Product Design',
   ];
 
   const projects = content.projects || [];
@@ -208,10 +211,23 @@ export const AdminProjectsTab: React.FC<AdminTabProps> = ({
   };
 
   const handleRemoveExtraImage = (projectIndex: number, imageIndex: number) => {
+    if (window.confirm('Remove this gallery image?')) {
+      const proj = projects[projectIndex];
+      const currentExtras = proj.extraImages || [];
+      const updatedExtras = currentExtras.filter((_, i) => i !== imageIndex);
+      handleProjectChange(projectIndex, 'extraImages', updatedExtras);
+    }
+  };
+
+  const moveExtraImage = (projectIndex: number, imageIndex: number, direction: 'up' | 'down') => {
     const proj = projects[projectIndex];
-    const currentExtras = proj.extraImages || [];
-    const updatedExtras = currentExtras.filter((_, i) => i !== imageIndex);
-    handleProjectChange(projectIndex, 'extraImages', updatedExtras);
+    const currentExtras = [...(proj.extraImages || [])];
+    const target = direction === 'up' ? imageIndex - 1 : imageIndex + 1;
+    if (target < 0 || target >= currentExtras.length) return;
+    const temp = currentExtras[imageIndex];
+    currentExtras[imageIndex] = currentExtras[target];
+    currentExtras[target] = temp;
+    handleProjectChange(projectIndex, 'extraImages', currentExtras);
   };
 
   const filteredProjects = projects.filter((p: ProjectItem) => {
@@ -295,22 +311,13 @@ export const AdminProjectsTab: React.FC<AdminTabProps> = ({
           </div>
 
           {/* Microcopy, Button Labels & "View More" Text */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="text-[11px] text-white/60 block mb-1">Filter Label</label>
               <input
                 type="text"
                 value={projectsSection.filterLabel || 'Filter:'}
                 onChange={(e) => handleSectionChange('filterLabel', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-black/70 border border-white/10 text-xs text-white outline-none focus:border-[#D0FF00]"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] text-white/60 block mb-1">Client Label</label>
-              <input
-                type="text"
-                value={projectsSection.clientLabel || 'Client:'}
-                onChange={(e) => handleSectionChange('clientLabel', e.target.value)}
                 className="w-full px-3 py-2 rounded-lg bg-black/70 border border-white/10 text-xs text-white outline-none focus:border-[#D0FF00]"
               />
             </div>
@@ -505,7 +512,7 @@ export const AdminProjectsTab: React.FC<AdminTabProps> = ({
                         )}
                       </div>
                       <p className="text-[11px] text-white/50">
-                        {project.category} // {project.year || '2025'} // {project.client || 'Personal Project'}
+                        {project.category} // {project.year || '2025'}
                       </p>
                     </div>
                   </div>
@@ -597,20 +604,7 @@ export const AdminProjectsTab: React.FC<AdminTabProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                  <div>
-                    <label className="text-[10px] text-white/50 block mb-1">
-                      Client (Optional – hidden on site if empty)
-                    </label>
-                    <input
-                      type="text"
-                      value={project.client || ''}
-                      onChange={(e) => handleProjectChange(rawIndex, 'client', e.target.value)}
-                      placeholder="e.g. Apex Championship League"
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-black/80 border border-white/10 text-xs text-white outline-none focus:border-[#D0FF00]"
-                    />
-                  </div>
-
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                   <div>
                     <label className="text-[10px] text-white/50 block mb-1">Year</label>
                     <input
@@ -728,26 +722,67 @@ export const AdminProjectsTab: React.FC<AdminTabProps> = ({
                   </div>
 
                   {extraImages.length > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">
                       {extraImages.map((extraImg, imgIdx) => (
                         <div
                           key={imgIdx}
-                          className="relative aspect-video rounded-lg overflow-hidden border border-white/15 bg-black group"
+                          className="group relative rounded-xl overflow-hidden border border-white/15 bg-black/80 flex flex-col shadow-sm hover:border-white/30 transition-all"
                         >
-                          <img
-                            src={extraImg.url}
-                            alt={extraImg.alt || `Extra ${imgIdx + 1}`}
-                            className="w-full h-full object-cover"
-                            referrerPolicy="no-referrer"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveExtraImage(rawIndex, imgIdx)}
-                            className="absolute top-1 right-1 p-1 rounded-full bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                            title="Remove image"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
+                          <div className="relative aspect-video w-full bg-black overflow-hidden">
+                            <img
+                              src={extraImg.url}
+                              alt={extraImg.alt || `Extra ${imgIdx + 1}`}
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                            {/* Order tag */}
+                            <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 border border-white/10 text-[9px] font-mono text-white/80">
+                              #{imgIdx + 1}
+                            </span>
+                            {/* Small X / Remove button on image thumbnail */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveExtraImage(rawIndex, imgIdx)}
+                              className="absolute top-1.5 right-1.5 px-1.5 py-1 rounded-md bg-black/80 hover:bg-red-500/90 text-white/80 hover:text-white border border-white/20 hover:border-red-500 transition-colors cursor-pointer shadow-sm flex items-center gap-1 text-[10px]"
+                              title="Remove gallery image"
+                            >
+                              <X className="w-3 h-3" />
+                              <span className="font-medium">Remove</span>
+                            </button>
+                          </div>
+
+                          {/* Reordering Controls (up/down arrows matching project reordering style) and action bar */}
+                          <div className="p-1.5 bg-black/90 border-t border-white/10 flex items-center justify-between gap-1">
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => moveExtraImage(rawIndex, imgIdx, 'up')}
+                                disabled={imgIdx === 0}
+                                className="p-1 rounded bg-white/5 hover:bg-white/10 text-white/60 hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+                                title="Move up in order"
+                              >
+                                <ArrowUp className="w-3 h-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveExtraImage(rawIndex, imgIdx, 'down')}
+                                disabled={imgIdx === extraImages.length - 1}
+                                className="p-1 rounded bg-white/5 hover:bg-white/10 text-white/60 hover:text-white disabled:opacity-20 cursor-pointer transition-colors"
+                                title="Move down in order"
+                              >
+                                <ArrowDown className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveExtraImage(rawIndex, imgIdx)}
+                              className="text-[10px] text-red-400 hover:text-red-300 font-medium cursor-pointer flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-red-500/10 transition-colors"
+                              title="Remove gallery image"
+                            >
+                              <Trash2 className="w-2.5 h-2.5" />
+                              <span>Remove</span>
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>

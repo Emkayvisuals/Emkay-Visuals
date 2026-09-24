@@ -24,7 +24,6 @@ export const ProjectLightbox: React.FC<ProjectLightboxProps> = ({
   onInquire,
 }) => {
   const { projectsSection } = PORTFOLIO_CONTENT;
-  const clientLabel = projectsSection?.clientLabel || 'Client:';
   const videoEmbedBadge = projectsSection?.videoEmbedBadge || 'Motion Reel';
   const toolsLabel = projectsSection?.toolsLabel || 'Software & Tools Used';
   const inquireButtonText = projectsSection?.inquireProjectButtonText || 'Inquire Similar Project';
@@ -230,14 +229,6 @@ export const ProjectLightbox: React.FC<ProjectLightboxProps> = ({
             <h3 className="font-montserrat font-medium italic text-xl sm:text-2xl text-[#D0FF00] tracking-tight leading-snug mb-2">
               {project.title}
             </h3>
-
-            {/* Client info - Only if present and non-empty */}
-            {project.client && project.client.trim() && (
-              <div className="flex items-center gap-2 mb-4 text-xs text-white/50">
-                <span>{clientLabel}</span>
-                <span className="text-[#D0FF00] font-medium">{project.client}</span>
-              </div>
-            )}
 
             {/* Description - Only if present and non-empty */}
             {project.description && project.description.trim() && (
