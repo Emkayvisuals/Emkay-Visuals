@@ -21,7 +21,7 @@ export const Footer: React.FC = () => {
   );
 
   return (
-    <footer className="relative border-t border-white/10 bg-[#050505] pt-14 pb-10 px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <footer className="relative border-t border-white/10 bg-[#050505] pt-10 pb-7 px-4 sm:px-6 lg:px-8 overflow-hidden">
       {/* Subtle top glow line */}
       <div
         className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px]"
@@ -30,27 +30,27 @@ export const Footer: React.FC = () => {
         }}
       />
 
-      <div className="max-w-7xl mx-auto flex flex-col justify-between gap-10">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+      <div className="max-w-7xl mx-auto flex flex-col justify-between gap-8">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           {/* Brand Logo & Tagline */}
           <div className="max-w-sm">
-            <div className="flex items-center gap-2.5 mb-2.5">
+            <div className="flex items-center gap-2 mb-2">
               {brand?.logoUrl ? (
                 <img
                   src={brand.logoUrl}
                   alt={brand.logoAlt || 'Emkay Visuals Logo'}
-                  width="32"
-                  height="32"
+                  width="28"
+                  height="28"
                   loading="lazy"
-                  className="w-8 h-8 rounded-full object-cover border border-[#D0FF00]/40 shrink-0 shadow-[0_0_12px_rgba(208,255,0,0.4)]"
+                  className="w-7 h-7 rounded-full object-cover border border-[#D0FF00]/40 shrink-0 shadow-[0_0_10px_rgba(208,255,0,0.35)]"
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-[#D0FF00] text-[#050505] font-extrabold flex items-center justify-center text-xs shadow-[0_0_12px_rgba(208,255,0,0.4)]">
+                <div className="w-7 h-7 rounded-full bg-[#D0FF00] text-[#050505] font-extrabold flex items-center justify-center text-[11px] shadow-[0_0_10px_rgba(208,255,0,0.35)]">
                   {footer?.logoAbbr || 'EV'}
                 </div>
               )}
-              <span className="font-extrabold text-lg sm:text-xl tracking-wide text-[#FEFFFC]">
+              <span className="font-extrabold text-base sm:text-lg tracking-wide text-[#FEFFFC]">
                 {brand?.name ? (
                   <>
                     {brand.name.split(' ')[0]}{' '}
@@ -62,19 +62,19 @@ export const Footer: React.FC = () => {
                 )}
               </span>
             </div>
-            <p className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-white/70 font-normal leading-relaxed">
+            <p className="font-cormorant italic font-medium sm:font-semibold text-[1.05em] text-white/70 font-normal leading-relaxed">
               {footer?.tagline}
             </p>
           </div>
 
           {/* Nav Quick Links */}
           {visibleNav.length > 0 && (
-            <div className="flex flex-wrap gap-x-5 gap-y-2">
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
               {visibleNav.map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
-                  className="text-xs font-medium text-white/60 hover:text-[#D0FF00] transition-colors py-1.5 min-h-[36px] flex items-center"
+                  className="text-[11px] font-medium text-white/60 hover:text-[#D0FF00] transition-colors py-1 min-h-[32px] flex items-center"
                 >
                   {item.label}
                 </a>
@@ -83,7 +83,7 @@ export const Footer: React.FC = () => {
           )}
 
           {/* Dynamic Social Links - Icon Only with Staggered Viewport Fade-In */}
-          <div className="social-links-container flex flex-wrap items-center gap-2.5">
+          <div className="social-links-container flex flex-wrap items-center gap-2">
             {resolvedLinks.map((item, idx) => {
               const meta = getPlatformMeta(item.platform);
               const IconComp = meta.icon;
@@ -99,12 +99,12 @@ export const Footer: React.FC = () => {
                   aria-label={item.label || item.platform}
                   title={`${item.label} (${item.displayHandle})`}
                   id={`footer-social-${item.platform.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${idx}`}
-                  initial={{ opacity: 0, y: 14, scale: 0.9 }}
+                  initial={{ opacity: 0, y: 12, scale: 0.9 }}
                   whileInView={{ opacity: 1, y: 0, scale: 1 }}
                   viewport={{ once: true, margin: '-20px' }}
                   transition={{
                     duration: 0.45,
-                    delay: idx * 0.06,
+                    delay: idx * 0.05,
                     ease: [0.21, 0.47, 0.32, 0.98],
                   }}
                   style={
@@ -112,9 +112,9 @@ export const Footer: React.FC = () => {
                       '--hover-accent': accentColor,
                     } as React.CSSProperties
                   }
-                  className={`group relative w-11 h-11 flex items-center justify-center rounded-full bg-white/[0.04] border border-white/10 ${meta.hoverBorder} hover:bg-white/[0.09] hover:scale-110 active:scale-95 transition-all duration-300 ease-out text-white/75 hover:shadow-[0_0_16px_rgba(208,255,0,0.18)] shrink-0 min-h-[44px] min-w-[44px] cursor-pointer`}
+                  className={`group relative w-9 h-9 sm:w-9.5 sm:h-9.5 flex items-center justify-center rounded-full bg-white/[0.04] border border-white/10 ${meta.hoverBorder} hover:bg-white/[0.09] hover:scale-110 active:scale-95 transition-all duration-300 ease-out text-white/75 hover:shadow-[0_0_14px_rgba(208,255,0,0.18)] shrink-0 min-h-[38px] min-w-[38px] cursor-pointer`}
                 >
-                  <IconComp className="w-5 h-5 text-white/75 group-hover:text-[var(--hover-accent)] group-hover:scale-110 transition-all duration-300 ease-out" />
+                  <IconComp className="w-4 h-4 text-white/75 group-hover:text-[var(--hover-accent)] group-hover:scale-110 transition-all duration-300 ease-out" />
                 </motion.a>
               );
             })}
@@ -124,25 +124,25 @@ export const Footer: React.FC = () => {
               type="button"
               onClick={scrollToTop}
               aria-label="Scroll to Top"
-              initial={{ opacity: 0, y: 14, scale: 0.85 }}
+              initial={{ opacity: 0, y: 12, scale: 0.85 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true, margin: '-20px' }}
               transition={{
                 duration: 0.45,
-                delay: resolvedLinks.length * 0.06,
+                delay: resolvedLinks.length * 0.05,
                 ease: [0.21, 0.47, 0.32, 0.98],
               }}
-              className="w-11 h-11 flex items-center justify-center rounded-full bg-[#D0FF00] text-[#050505] hover:scale-110 active:scale-95 transition-all duration-300 shadow-[0_0_15px_rgba(208,255,0,0.35)] hover:shadow-[0_0_22px_rgba(208,255,0,0.55)] cursor-pointer ml-1 shrink-0 min-h-[44px] min-w-[44px]"
+              className="w-9 h-9 sm:w-9.5 sm:h-9.5 flex items-center justify-center rounded-full bg-[#D0FF00] text-[#050505] hover:scale-110 active:scale-95 transition-all duration-300 shadow-[0_0_12px_rgba(208,255,0,0.35)] hover:shadow-[0_0_18px_rgba(208,255,0,0.55)] cursor-pointer ml-1 shrink-0 min-h-[38px] min-w-[38px]"
             >
-              <ArrowUp className="w-4 h-4 transition-transform duration-300 group-hover:-translate-y-0.5" />
+              <ArrowUp className="w-3.5 h-3.5 transition-transform duration-300 group-hover:-translate-y-0.5" />
             </motion.button>
           </div>
         </div>
 
         {/* Bottom Copyright & Rights */}
-        <div className="pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/40 font-normal">
+        <div className="pt-4.5 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-2.5 text-[11px] text-white/40 font-normal">
           <div>{footer?.copyright}</div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#D0FF00]"></span>
             <span>{footer?.rightsNote}</span>
           </div>

@@ -390,8 +390,21 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
       : `Hi Emkay, I saw your portfolio and would like to discuss a project!`
   )}`;
 
+  const visibleChannels = getResolvedSocialLinks(socials).filter(
+    (item) => item.visible !== false && item.isValid
+  );
+
+  const getDesktopGridCols = (count: number) => {
+    if (count <= 3) return 'sm:grid-cols-3 lg:grid-cols-3';
+    if (count === 4) return 'sm:grid-cols-4 lg:grid-cols-4';
+    if (count === 5) return 'sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-3 xl:grid-cols-5';
+    if (count === 6) return 'sm:grid-cols-3 lg:grid-cols-3';
+    if (count === 7 || count === 8) return 'sm:grid-cols-4 lg:grid-cols-4';
+    return 'sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5';
+  };
+
   return (
-    <section id="contact" className="relative py-20 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
+    <section id="contact" className="relative py-16 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
       {/* Background Soft Glows */}
       <div
         className="pointer-events-none absolute top-10 left-10 w-[400px] h-[400px] rounded-full blur-[170px] opacity-10"
@@ -402,17 +415,17 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
         style={{ background: '#D0FF00' }}
       />
 
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         {/* Left Column: Direct Links & Instant Comms */}
         <motion.div
-          initial={{ opacity: 0, x: -25 }}
+          initial={{ opacity: 0, x: -20 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, margin: '-50px' }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="lg:col-span-5 flex flex-col justify-between"
         >
           <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-3 sm:mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-[11px] sm:text-xs font-semibold tracking-wide mb-2.5">
               <Sparkles className="w-3.5 h-3.5" />
               <span>
                 {badgeMain}{' '}
@@ -424,26 +437,33 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
               </span>
             </div>
 
-            <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight leading-[1.15] mb-3 sm:mb-4">
+            <h2 className="font-montserrat font-medium italic text-xl sm:text-3xl lg:text-4xl text-[#D0FF00] tracking-tight leading-[1.15] mb-2.5 sm:mb-3">
               {headingMain}{' '}
               <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">
                 {headingAccent}
               </span>
             </h2>
 
-            <p className="text-sm sm:text-base text-white/70 font-normal leading-relaxed mb-6 sm:mb-8">
+            <p className="text-xs sm:text-sm text-white/70 font-normal leading-relaxed mb-5 sm:mb-6">
               {subtext}
             </p>
 
-            {/* Direct Connect Action Buttons */}
-            <div className="space-y-3 mb-6 sm:mb-8">
-              <span className="text-xs font-semibold text-white/45 tracking-wide block mb-1.5">
+            {/* Direct Connect Action Buttons (Compact Grid) */}
+            <div className="mb-4 sm:mb-5">
+              <span className="text-[11px] font-semibold text-white/45 tracking-wide block mb-2">
                 {directChannelsTitle}
               </span>
 
-              {getResolvedSocialLinks(socials)
-                .filter((item) => item.visible !== false && item.isValid)
-                .map((item, idx) => {
+              <div
+                className={`grid ${
+                  visibleChannels.length < 3
+                    ? visibleChannels.length === 1
+                      ? 'grid-cols-1'
+                      : 'grid-cols-2'
+                    : 'grid-cols-3'
+                } ${getDesktopGridCols(visibleChannels.length)} gap-2 sm:gap-2.5`}
+              >
+                {visibleChannels.map((item, idx) => {
                   const meta = getPlatformMeta(item.platform);
                   const IconComp = meta.icon;
                   const isExternal = !item.isMailto;
@@ -454,37 +474,37 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                       href={item.url}
                       target={isExternal ? '_blank' : undefined}
                       rel={isExternal ? 'noopener noreferrer' : undefined}
+                      title={item.description || item.displayHandle || `${item.label || item.platform} (${item.platform})`}
                       id={`contact-channel-${item.platform.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${idx}`}
-                      whileHover={{ scale: 1.015, x: 2 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`group flex items-center justify-between p-3.5 sm:p-4 rounded-2xl glass-panel border border-white/10 ${meta.hoverBorder} transition-colors duration-300 min-h-[56px] bg-[#050505]/70`}
+                      whileHover={{ scale: 1.025, y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                      className={`group relative flex flex-col justify-between p-2.5 sm:p-3 rounded-xl glass-panel border border-white/10 ${meta.hoverBorder} transition-all duration-300 min-h-[96px] sm:min-h-[102px] bg-[#050505]/75 hover:bg-[#0c0c0c] overflow-hidden`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      {/* Top Row: Branded Icon (32-34px) + Subtle Arrow */}
+                      <div className="flex items-start justify-between gap-1 w-full mb-1.5">
                         <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-all shrink-0 border ${meta.cardBg}`}
+                          className={`w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 border ${meta.cardBg}`}
                         >
-                          <IconComp className="w-5 h-5" />
+                          <IconComp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-sm text-[#FEFFFC] block truncate">
-                              {item.label || item.platform}
-                            </span>
-                            <span
-                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${meta.badgeBg}`}
-                            >
-                              {item.platform}
-                            </span>
-                          </div>
-                          <span className="text-xs text-white/55 font-normal block truncate">
-                            {item.description || item.displayHandle}
-                          </span>
-                        </div>
+                        <ArrowUpRight className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white/35 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 mt-0.5" />
                       </div>
-                      <ArrowUpRight className="w-4 h-4 text-white/40 group-hover:text-white transition-transform shrink-0 ml-2" />
+
+                      {/* Bottom Info: Platform Name (wraps if long) + Colored Label Pill */}
+                      <div className="min-w-0 w-full flex flex-col items-start gap-1">
+                        <span className="font-montserrat font-bold text-xs sm:text-[13px] text-[#FEFFFC] block leading-[1.25] break-words line-clamp-2 group-hover:text-[#D0FF00] transition-colors">
+                          {item.label || item.platform}
+                        </span>
+                        <span
+                          className={`inline-block text-[8px] sm:text-[9px] font-semibold px-1.5 py-0.5 rounded-full border max-w-full truncate leading-none ${meta.badgeBg}`}
+                        >
+                          {item.platform}
+                        </span>
+                      </div>
                     </motion.a>
                   );
                 })}
+              </div>
             </div>
 
             {/* Quick Copy Email action */}
@@ -523,7 +543,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="lg:col-span-7"
         >
-          <div className="rounded-3xl glass-panel border border-white/12 p-5 sm:p-8 md:p-10 bg-[#080808] shadow-2xl relative overflow-hidden">
+          <div className="rounded-2xl sm:rounded-3xl glass-panel border border-white/12 p-4 sm:p-6 md:p-8 bg-[#080808] shadow-2xl relative overflow-hidden">
             {/* Corner Tech Glow */}
             <div className="absolute top-0 right-0 w-28 h-28 bg-[#8116E0]/10 blur-3xl pointer-events-none" />
 
@@ -535,15 +555,15 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                 initial={{ opacity: 0, scale: 0.93, y: 15 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ duration: shouldReduceMotion ? 0 : 0.45, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full max-w-[560px] mx-auto rounded-[24px] sm:rounded-[28px] bg-[#0A0A0A] border border-white/12 p-8 sm:p-10 md:p-12 shadow-[0_0_50px_rgba(129,22,224,0.25),0_20px_45px_rgba(0,0,0,0.85)] relative overflow-hidden text-center flex flex-col items-center justify-center"
+                className="w-full max-w-[500px] mx-auto rounded-[20px] sm:rounded-[24px] bg-[#0A0A0A] border border-white/12 p-6 sm:p-8 md:p-9 shadow-[0_0_40px_rgba(129,22,224,0.2),0_15px_35px_rgba(0,0,0,0.85)] relative overflow-hidden text-center flex flex-col items-center justify-center"
               >
                 {/* Soft Violet Glow Backdrop */}
                 <div
-                  className="absolute -top-20 -right-20 w-56 h-56 bg-[#8116E0]/20 rounded-full blur-3xl pointer-events-none -z-10"
+                  className="absolute -top-20 -right-20 w-48 h-48 bg-[#8116E0]/20 rounded-full blur-3xl pointer-events-none -z-10"
                   aria-hidden="true"
                 />
                 <div
-                  className="absolute -bottom-20 -left-20 w-56 h-56 bg-[#8116E0]/20 rounded-full blur-3xl pointer-events-none -z-10"
+                  className="absolute -bottom-20 -left-20 w-48 h-48 bg-[#8116E0]/20 rounded-full blur-3xl pointer-events-none -z-10"
                   aria-hidden="true"
                 />
 
@@ -559,7 +579,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                     delay: shouldReduceMotion ? 0 : 0.9,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="font-montserrat font-bold text-2xl sm:text-3xl md:text-[32px] text-[#D0FF00] tracking-tight mb-3 sm:mb-4 text-center leading-tight"
+                  className="font-montserrat font-bold text-xl sm:text-2xl md:text-[26px] text-[#D0FF00] tracking-tight mb-2.5 sm:mb-3 text-center leading-tight"
                 >
                   {confirmationTitle}
                 </motion.h3>
@@ -573,7 +593,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                     delay: shouldReduceMotion ? 0 : 1.05,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="font-montserrat font-normal text-sm sm:text-base text-[#FEFFFC]/75 leading-relaxed max-w-[440px] mx-auto text-center mb-0"
+                  className="font-montserrat font-normal text-xs sm:text-sm text-[#FEFFFC]/75 leading-relaxed max-w-[400px] mx-auto text-center mb-0"
                 >
                   {confirmationMessage}
                 </motion.p>
@@ -587,7 +607,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                     delay: shouldReduceMotion ? 0 : 1.18,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="w-12 h-[2px] bg-[#D0FF00] rounded-full mx-auto my-5 sm:my-6 shrink-0 shadow-[0_0_8px_rgba(208,255,0,0.4)] origin-center"
+                  className="w-10 h-[2px] bg-[#D0FF00] rounded-full mx-auto my-4 sm:my-5 shrink-0 shadow-[0_0_8px_rgba(208,255,0,0.4)] origin-center"
                   aria-hidden="true"
                 />
 
@@ -600,7 +620,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                     delay: shouldReduceMotion ? 0 : 1.28,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="font-cormorant italic text-lg sm:text-xl md:text-[22px] text-[#FEFFFC] font-medium tracking-wide text-center"
+                  className="font-cormorant italic text-base sm:text-lg md:text-[19px] text-[#FEFFFC] font-medium tracking-wide text-center"
                 >
                   "{confirmationClosing.replace(/^["']|["']$/g, '')}"
                 </motion.p>
@@ -614,7 +634,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                     delay: shouldReduceMotion ? 0 : 1.4,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="mt-8 pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 w-full"
+                  className="mt-6 pt-1 flex flex-col sm:flex-row items-center justify-center gap-2.5 w-full"
                 >
                   <button
                     type="button"
@@ -631,7 +651,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                         website: '',
                       });
                     }}
-                    className="w-full sm:w-auto px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-[#FEFFFC] text-xs font-semibold font-montserrat transition-all duration-200 cursor-pointer min-h-[44px] flex items-center justify-center"
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-[#FEFFFC] text-xs font-semibold font-montserrat transition-all duration-200 cursor-pointer min-h-[40px] flex items-center justify-center"
                   >
                     {successButtonText}
                   </button>
@@ -639,7 +659,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                     href={socials.whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#25D366]/20 border border-[#25D366]/40 hover:bg-[#25D366]/30 text-[#25D366] text-xs font-semibold font-montserrat transition-colors min-h-[44px] flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-[#25D366]/20 border border-[#25D366]/40 hover:bg-[#25D366]/30 text-[#25D366] text-xs font-semibold font-montserrat transition-colors min-h-[40px] flex items-center justify-center gap-1.5"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
                     <span>Follow up on WhatsApp</span>
@@ -866,9 +886,9 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   type="submit"
                   disabled={loading}
                   id="contact-form-submit"
-                  whileHover={loading ? {} : { scale: 1.015, boxShadow: '0 0 30px rgba(208,255,0,0.5)' }}
+                  whileHover={loading ? {} : { scale: 1.012, boxShadow: '0 0 24px rgba(208,255,0,0.45)' }}
                   whileTap={loading ? {} : { scale: 0.98 }}
-                  className={`w-full py-3.5 sm:py-4 rounded-full bg-[#D0FF00] text-[#050505] font-extrabold text-sm tracking-wide shadow-[0_0_20px_rgba(208,255,0,0.35)] transition-all duration-300 flex items-center justify-center gap-2 min-h-[48px] ${
+                  className={`w-full py-2.5 sm:py-3 rounded-full bg-[#D0FF00] text-[#050505] font-extrabold text-xs sm:text-sm tracking-wide shadow-[0_0_20px_rgba(208,255,0,0.3)] transition-all duration-300 flex items-center justify-center gap-2 min-h-[42px] sm:min-h-[44px] ${
                     loading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
                   }`}
                 >

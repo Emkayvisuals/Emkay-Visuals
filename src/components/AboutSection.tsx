@@ -31,7 +31,7 @@ export const AboutSection: React.FC = () => {
   );
 
   return (
-    <section id="about" className="relative py-20 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
+    <section id="about" className="relative py-16 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
       {/* Ambient background glows */}
       <div
         className="pointer-events-none absolute top-1/3 left-0 w-[350px] sm:w-[450px] h-[350px] sm:h-[450px] rounded-full blur-[160px] opacity-10"
@@ -42,7 +42,7 @@ export const AboutSection: React.FC = () => {
         style={{ background: '#D0FF00' }}
       />
 
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
         {/* Left Column: Photo Container with Futuristic Tech Frame */}
         <motion.div
           initial={{ opacity: 0, x: -25 }}
@@ -56,7 +56,7 @@ export const AboutSection: React.FC = () => {
               scale: 1.015,
               transition: { duration: 0.3, ease: 'easeOut' },
             }}
-            className="relative w-full max-w-md group"
+            className="relative w-full max-w-sm group"
           >
             {/* Violet ambient aura behind portrait */}
             <div
@@ -89,10 +89,10 @@ export const AboutSection: React.FC = () => {
                   />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#0e0e0e] to-[#050505]">
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#D0FF00]/10 border-2 border-[#D0FF00]/40 flex items-center justify-center mb-4 shadow-[0_0_24px_rgba(208,255,0,0.15)] group-hover:scale-105 transition-transform">
-                      <User className="w-12 h-12 sm:w-14 sm:h-14 text-[#D0FF00]" />
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#D0FF00]/10 border-2 border-[#D0FF00]/40 flex items-center justify-center mb-3.5 shadow-[0_0_24px_rgba(208,255,0,0.15)] group-hover:scale-105 transition-transform">
+                      <User className="w-10 h-10 sm:w-12 sm:h-12 text-[#D0FF00]" />
                     </div>
-                    <span className="text-xs font-semibold text-[#D0FF00] tracking-widest">{brand?.name || 'EMKAY VISUALS'}</span>
+                    <span className="text-[11px] font-semibold text-[#D0FF00] tracking-widest">{brand?.name || 'EMKAY VISUALS'}</span>
                     <span className="text-[10px] text-white/50 font-normal mt-1">{artistIdLabel}</span>
                   </div>
                 )}
@@ -101,9 +101,9 @@ export const AboutSection: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-black/30" />
 
                 {/* Tag on bottom of image */}
-                <div className="absolute bottom-3 left-3 right-3 z-10 p-2.5 sm:p-3 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 flex items-center justify-between">
+                <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 p-2 sm:p-2.5 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 flex items-center justify-between">
                   <div>
-                    <span className="block text-[10px] sm:text-[11px] font-semibold text-[#D0FF00] tracking-wide">
+                    <span className="block text-[10px] font-semibold text-[#D0FF00] tracking-wide">
                       {artistIdLabel}
                     </span>
                     <span className="font-bold text-xs sm:text-sm text-[#FEFFFC]">
@@ -111,7 +111,7 @@ export const AboutSection: React.FC = () => {
                     </span>
                   </div>
                   {experienceBadge && (
-                    <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-1 rounded bg-[#8116E0]/40 text-[#FEFFFC] border border-[#8116E0]/60">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#8116E0]/40 text-[#FEFFFC] border border-[#8116E0]/60">
                       {experienceBadge}
                     </span>
                   )}
@@ -120,7 +120,7 @@ export const AboutSection: React.FC = () => {
 
               {/* Coordinates sub-bar */}
               {statusCoordinates && statusCoordinates.length > 0 && (
-                <div className="px-3 py-2 flex items-center justify-between text-[10px] sm:text-[11px] text-white/45 font-medium">
+                <div className="px-3 py-1.5 flex items-center justify-between text-[10px] sm:text-[11px] text-white/45 font-medium">
                   {statusCoordinates.map((coord, cIdx) => (
                     <React.Fragment key={coord}>
                       {cIdx > 0 && <span>•</span>}
@@ -141,7 +141,7 @@ export const AboutSection: React.FC = () => {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="lg:col-span-7 flex flex-col justify-center"
         >
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-xs font-semibold tracking-wide mb-4 w-fit">
+          <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-white/[0.04] border border-[#8116E0]/40 text-[#D0FF00] text-[11px] sm:text-xs font-semibold tracking-wide mb-3 w-fit">
             <Sparkles className="w-3.5 h-3.5" />
             <span>
               {badgeMain}{' '}
@@ -153,14 +153,14 @@ export const AboutSection: React.FC = () => {
             </span>
           </div>
 
-          <h2 className="font-montserrat font-medium italic text-2xl sm:text-4xl lg:text-5xl text-[#D0FF00] tracking-tight leading-[1.15] mb-5">
+          <h2 className="font-montserrat font-medium italic text-xl sm:text-3xl lg:text-4xl text-[#D0FF00] tracking-tight leading-[1.15] mb-4">
             {headingMain}{' '}
             <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em] text-[#FEFFFC]">
               {headingAccent}
             </span>
           </h2>
 
-          <div className="space-y-3.5 text-sm sm:text-base text-white/75 font-normal leading-relaxed mb-8">
+          <div className="space-y-3 text-xs sm:text-sm text-white/75 font-normal leading-relaxed mb-6">
             {bioParagraphs.map((paragraph, pIdx) => (
               <p key={pIdx}>{paragraph}</p>
             ))}
@@ -168,20 +168,20 @@ export const AboutSection: React.FC = () => {
 
           {/* Key Value Highlights */}
           {visibleHighlights.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
               {visibleHighlights.map((item) => (
                 <motion.div
                   key={item.number}
                   whileHover={{ y: -3, scale: 1.015 }}
-                  className="p-4 rounded-2xl glass-panel border border-white/[0.07] hover:border-[#D0FF00]/40 transition-all cursor-default bg-[#050505]/70"
+                  className="p-3 sm:p-3.5 rounded-2xl glass-panel border border-white/[0.07] hover:border-[#D0FF00]/40 transition-all cursor-default bg-[#050505]/70"
                 >
-                  <span className="text-xs font-bold text-[#D0FF00] block mb-1">
+                  <span className="text-[11px] font-bold text-[#D0FF00] block mb-1">
                     // <span className="font-cormorant italic font-medium sm:font-semibold text-[1.12em]">{item.number}</span>
                   </span>
-                  <h4 className="font-montserrat font-medium italic text-sm text-[#D0FF00] mb-1">
+                  <h4 className="font-montserrat font-medium italic text-xs sm:text-[13px] text-[#D0FF00] mb-0.5">
                     {item.title}
                   </h4>
-                  <p className="text-xs text-white/60 font-normal leading-normal">
+                  <p className="text-[11px] text-white/60 font-normal leading-normal">
                     {item.text}
                   </p>
                 </motion.div>
@@ -189,33 +189,33 @@ export const AboutSection: React.FC = () => {
             </div>
           )}
 
-          {/* Software & Tech Stack */}
+          {/* Software & Tech Stack - 2 columns on mobile */}
           {visibleSoftwareTools.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Cpu className="w-4 h-4 text-[#D0FF00]" />
-                <span className="text-xs font-semibold text-white/50 tracking-wide">
+              <div className="flex items-center gap-2 mb-2.5">
+                <Cpu className="w-3.5 h-3.5 text-[#D0FF00]" />
+                <span className="text-[11px] sm:text-xs font-semibold text-white/50 tracking-wide">
                   {toolkitLabel}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-2.5">
                 {visibleSoftwareTools.map((tool) => (
                   <motion.div
                     key={tool.name}
                     whileHover={{ y: -2, scale: 1.015 }}
-                    className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] hover:border-[#D0FF00]/40 transition-all flex flex-col justify-between cursor-default min-h-[44px]"
+                    className="p-2 sm:p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.08] hover:border-[#D0FF00]/40 transition-all flex flex-col justify-between cursor-default min-h-[40px] sm:min-h-[44px]"
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] font-semibold text-[#D0FF00]">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[10px] sm:text-[11px] font-semibold text-[#D0FF00]">
                         {tool.level}
                       </span>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#8116E0]" />
+                      <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#8116E0]" />
                     </div>
-                    <span className="font-bold text-xs sm:text-sm text-[#FEFFFC]">
+                    <span className="font-bold text-[11px] sm:text-xs md:text-sm text-[#FEFFFC] truncate">
                       {tool.name}
                     </span>
-                    <span className="text-[11px] text-white/45 font-normal mt-0.5">
+                    <span className="text-[10px] sm:text-[11px] text-white/45 font-normal mt-0.5 truncate">
                       {tool.type}
                     </span>
                   </motion.div>
