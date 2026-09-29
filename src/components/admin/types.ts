@@ -14,7 +14,8 @@ export type AdminTabId =
   | 'testimonials'
   | 'faq'
   | 'contact'
-  | 'footer';
+  | 'footer'
+  | 'youtubeGallery';
 
 export interface AdminTabProps {
   content: PortfolioContentType;

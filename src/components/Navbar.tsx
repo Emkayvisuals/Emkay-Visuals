@@ -60,11 +60,29 @@ export const Navbar: React.FC = () => {
 
   const handleLinkClick = (href: string) => {
     setMobileMenuOpen(false);
-    if (window.location.pathname.startsWith('/portfolio')) {
-      // If we are currently on the portfolio page, route back to home with the hash
-      window.location.href = href.startsWith('#') ? `/${href}` : href;
+    const isOnOtherPage =
+      window.location.pathname.startsWith('/portfolio') ||
+      window.location.pathname.startsWith('/gallery');
+
+    if (isOnOtherPage) {
+      if (href === '#home' || href === '/') {
+        window.history.pushState({}, '', '/');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      window.history.pushState({}, '', `/${href}`);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      setTimeout(() => {
+        const targetId = href.replace('#', '');
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 150);
       return;
     }
+
     const targetId = href.replace('#', '');
     const element = document.getElementById(targetId);
     if (element) {
@@ -173,33 +191,33 @@ export const Navbar: React.FC = () => {
             <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shrink-0" />
           </a>
 
-          {/* Mobile Menu Trigger - 44px min tap target */}
+          {/* Menu Trigger (Portfolio Menu) - 44px min tap target */}
           <button
             type="button"
             id="mobile-menu-toggle"
-            aria-label="Toggle Navigation Menu"
+            aria-label="Toggle Portfolio Navigation Menu"
             aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden w-11 h-11 flex items-center justify-center rounded-full text-white/85 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors focus:outline-none cursor-pointer"
+            className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full text-white/85 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors focus:outline-none cursor-pointer"
           >
             {mobileMenuOpen ? <X className="w-5 h-5 text-[#D0FF00]" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </nav>
 
-      {/* Mobile Drawer Dropdown & Backdrop */}
+      {/* Drawer Dropdown & Backdrop */}
       {mobileMenuOpen && (
         <>
           {/* Backdrop */}
           <div
-            className="pointer-events-auto fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
+            className="pointer-events-auto fixed inset-0 bg-black/80 backdrop-blur-sm z-40"
             onClick={() => setMobileMenuOpen(false)}
           />
 
           {/* Drawer Menu */}
           <div
             id="mobile-nav-dropdown"
-            className="pointer-events-auto md:hidden fixed top-18 left-3 right-3 z-50 bg-[#0A0A0A] border border-white/15 rounded-3xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.9)] flex flex-col gap-3 max-h-[85vh] overflow-y-auto"
+            className="pointer-events-auto fixed top-18 left-3 right-3 sm:left-auto sm:right-6 sm:w-96 z-50 bg-[#0A0A0A] border border-white/15 rounded-3xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.9)] flex flex-col gap-3 max-h-[85vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <span className="text-xs font-semibold text-[#D0FF00] tracking-wide">
@@ -208,7 +226,7 @@ export const Navbar: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-white/80 hover:text-white"
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-white/80 hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -217,7 +235,8 @@ export const Navbar: React.FC = () => {
             <div className="flex flex-col gap-1 pt-1">
               {visibleNavLinks.map((item) => {
                 const sectionId = item.href.replace('#', '');
-                const isActive = activeSection === sectionId;
+                const isActive =
+                  activeSection === sectionId && window.location.pathname === '/';
 
                 return (
                   <a
@@ -238,6 +257,29 @@ export const Navbar: React.FC = () => {
                   </a>
                 );
               })}
+
+              {/* YouTube / Manipulation Gallery: Hidden page accessible from the Portfolio Menu */}
+              <a
+                href="/gallery"
+                id="mobile-nav-gallery"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMobileMenuOpen(false);
+                  if (window.location.pathname !== '/gallery') {
+                    window.history.pushState({}, '', '/gallery');
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                    window.scrollTo({ top: 0, behavior: 'instant' as any });
+                  }
+                }}
+                className={`px-4 py-3 rounded-2xl text-sm font-medium tracking-wide transition-all min-h-[44px] flex items-center justify-between group ${
+                  window.location.pathname === '/gallery'
+                    ? 'bg-[#D0FF00] text-[#050505] font-bold shadow-md'
+                    : 'text-[#FEFFFC]/85 hover:bg-white/[0.08] hover:text-[#FEFFFC]'
+                }`}
+              >
+                <span>YouTube / Manipulation Gallery</span>
+                <ArrowUpRight className="w-4 h-4 text-[#D0FF00] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </a>
             </div>
 
             <div className="pt-3 border-t border-white/10 flex flex-col gap-2">
@@ -249,7 +291,7 @@ export const Navbar: React.FC = () => {
                     handleLinkClick(ctaLink);
                   }
                 }}
-                className="w-full text-center py-3.5 rounded-2xl bg-[#D0FF00] text-[#050505] font-bold text-sm min-h-[44px] flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(208,255,0,0.4)]"
+                className="w-full text-center py-3.5 rounded-2xl bg-[#D0FF00] text-[#050505] font-bold text-sm min-h-[44px] flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(208,255,0,0.4)] cursor-pointer"
               >
                 <Sparkles className="w-4 h-4 text-[#050505]" />
                 <span>{mobileCtaText}</span>

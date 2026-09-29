@@ -310,6 +310,8 @@ async function startServer() {
         req.method === 'GET' &&
         (url === '/' ||
           url.startsWith('/admin') ||
+          url.startsWith('/gallery') ||
+          url.startsWith('/portfolio') ||
           (!url.includes('.') && req.headers.accept?.includes('text/html')));
 
       if (isHtmlRequest) {

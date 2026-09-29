@@ -36,6 +36,7 @@ import {
   Loader2,
   Check,
   Database,
+  Video,
 } from 'lucide-react';
 import { AdminTabId } from './admin/types';
 import { SaveButton } from './admin/SaveButton';
@@ -56,6 +57,7 @@ import { AdminTestimonialsTab } from './admin/AdminTestimonialsTab';
 import { AdminFaqTab } from './admin/AdminFaqTab';
 import { AdminContactTab } from './admin/AdminContactTab';
 import { AdminFooterTab } from './admin/AdminFooterTab';
+import { AdminYoutubeGalleryTab } from './admin/AdminYoutubeGalleryTab';
 
 export const AdminDashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -421,6 +423,7 @@ export const AdminDashboard: React.FC = () => {
     { id: 'faq' as const, label: 'FAQ Section', icon: HelpCircle, category: 'Site Sections' },
     { id: 'contact' as const, label: 'Contact & Brief', icon: Phone, category: 'Site Sections' },
     { id: 'footer' as const, label: 'Footer & Rights', icon: PanelBottom, category: 'Site Sections' },
+    { id: 'youtubeGallery' as const, label: 'YouTube Gallery', icon: Video, category: 'Site Sections' },
   ];
 
   return (
@@ -761,6 +764,15 @@ export const AdminDashboard: React.FC = () => {
 
           {activeTab === 'footer' && (
             <AdminFooterTab
+              content={content}
+              onChange={setContent}
+              onSave={handleSaveSection}
+              saveState={saveState}
+            />
+          )}
+
+          {activeTab === 'youtubeGallery' && (
+            <AdminYoutubeGalleryTab
               content={content}
               onChange={setContent}
               onSave={handleSaveSection}

@@ -155,6 +155,28 @@ export interface SocialLinks {
   links: SocialLinkItem[];
 }
 
+export interface ManipulationGalleryItem {
+  id: string;
+  title: string;
+  image: string;
+  imageAlt?: string;
+  aspectRatio?: 'portrait' | 'landscape';
+  visible?: boolean;
+}
+
+export interface ManipulationGalleryConfig {
+  enabled: boolean;
+  headerImage: string;
+  headerImageAlt?: string;
+  introParagraph: string;
+  youtubeSectionTitle: string;
+  youtubeChannelUrl: string;
+  youtubeThumbnailImage: string;
+  youtubeThumbnailAlt?: string;
+  gallerySectionTitle: string;
+  items: ManipulationGalleryItem[];
+}
+
 export const DEFAULT_PORTFOLIO_CONTENT = {
   // ==========================================
   // 0. SEO & META TAGS
@@ -1068,6 +1090,129 @@ export const DEFAULT_PORTFOLIO_CONTENT = {
     whatsappLabel: 'WhatsApp Direct',
     emailLabel: 'Email Emkay',
   },
+
+  // ==========================================
+  // 14. YOUTUBE / MANIPULATION GALLERY
+  // ==========================================
+  manipulationGallery: {
+    enabled: true,
+    headerImage: '/Images/manipulation/Flying tortise.webp',
+    headerImageAlt: 'Emkay Visuals – Photo Manipulation Artwork Header',
+    introParagraph:
+      'Welcome to my photo manipulation laboratory and digital compositing archive. On my YouTube channel, I take you behind the screen to explore the detailed creation process behind surreal composites, sci-fi atmospheres, lighting breakdowns, and digital art techniques. Each piece is crafted layer by layer with cinematic depth, custom lighting passes, and meticulous compositing. Explore the video breakdowns on YouTube, or browse the complete gallery of finished artworks below.',
+    youtubeSectionTitle: 'Visit my YouTube channel',
+    youtubeChannelUrl: 'https://youtube.com/@emkayvisuals',
+    youtubeThumbnailImage: '/Images/thumbnail/airdrop1.webp',
+    youtubeThumbnailAlt: 'Emkay Visuals YouTube Channel - Photo Manipulation Breakdowns',
+    gallerySectionTitle: 'My Gallery',
+    items: [
+      {
+        id: 'manip-tortoise',
+        title: 'The Celestial Voyager // Flying Tortoise',
+        image: '/Images/manipulation/Flying tortise.webp',
+        aspectRatio: 'landscape',
+        visible: true,
+      },
+      {
+        id: 'manip-ny1',
+        title: 'Times Square Protocol // NY Part I',
+        image: '/Images/manipulation/NY1.webp',
+        aspectRatio: 'landscape',
+        visible: true,
+      },
+      {
+        id: 'manip-ny2',
+        title: 'Metropolitan Rebirth // NY Part II',
+        image: '/Images/manipulation/NY2.webp',
+        aspectRatio: 'landscape',
+        visible: true,
+      },
+      {
+        id: 'manip-doom1',
+        title: 'Doom Harbinger // Act I',
+        image: '/Images/manipulation/doom1.webp',
+        aspectRatio: 'portrait',
+        visible: true,
+      },
+      {
+        id: 'manip-doom2',
+        title: 'Doom Harbinger // Act II',
+        image: '/Images/manipulation/doom2.webp',
+        aspectRatio: 'portrait',
+        visible: true,
+      },
+      {
+        id: 'manip-forest1',
+        title: 'Ethereal Canopy // Whispering Pines',
+        image: '/Images/manipulation/forest1.webp',
+        aspectRatio: 'portrait',
+        visible: true,
+      },
+      {
+        id: 'manip-forest2',
+        title: 'Midnight Hollow // Deep Woodland',
+        image: '/Images/manipulation/forest2.webp',
+        aspectRatio: 'portrait',
+        visible: true,
+      },
+      {
+        id: 'manip-forest3',
+        title: 'Luminescent Glade // Forest Echo',
+        image: '/Images/manipulation/forest3.webp',
+        aspectRatio: 'portrait',
+        visible: true,
+      },
+      {
+        id: 'manip-judgement1',
+        title: 'Day of Reckoning // The Tribunal',
+        image: '/Images/manipulation/judgement1.webp',
+        aspectRatio: 'portrait',
+        visible: true,
+      },
+      {
+        id: 'manip-judgement2',
+        title: 'Scales of Fate // The Condemned',
+        image: '/Images/manipulation/judgement2.webp',
+        aspectRatio: 'portrait',
+        visible: true,
+      },
+      {
+        id: 'manip-judgement3',
+        title: 'Ascension Verdict // Final Judgement',
+        image: '/Images/manipulation/judgement3.webp',
+        aspectRatio: 'portrait',
+        visible: true,
+      },
+      {
+        id: 'manip-newyear',
+        title: 'Temporal Horizon // New Year Awakening',
+        image: '/Images/manipulation/new year.webp',
+        aspectRatio: 'portrait',
+        visible: true,
+      },
+      {
+        id: 'manip-victim0',
+        title: 'The Anomaly // Victim Zero',
+        image: '/Images/manipulation/victim0.webp',
+        aspectRatio: 'portrait',
+        visible: true,
+      },
+      {
+        id: 'manip-victim1',
+        title: 'Neural Extraction // Subject One',
+        image: '/Images/manipulation/victim1.webp',
+        aspectRatio: 'portrait',
+        visible: true,
+      },
+      {
+        id: 'manip-victim2',
+        title: 'Cybernetic Genesis // Subject Two',
+        image: '/Images/manipulation/victim2.webp',
+        aspectRatio: 'portrait',
+        visible: true,
+      },
+    ] as ManipulationGalleryItem[],
+  } as ManipulationGalleryConfig,
 };
 
 export type PortfolioContentType = typeof DEFAULT_PORTFOLIO_CONTENT;

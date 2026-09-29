@@ -12,7 +12,8 @@
         "projects": { "type": "array" },
         "about": { "type": "object" },
         "testimonials": { "type": "array" },
-        "socials": { "type": "object" }
+        "socials": { "type": "object" },
+        "manipulationGallery": { "type": "object" }
       }
     },
     "MediaItem": {

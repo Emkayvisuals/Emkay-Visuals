@@ -7,6 +7,7 @@ import { StatsRow } from './components/StatsRow';
 import { ServicesBento } from './components/ServicesBento';
 import { WorkGallery } from './components/WorkGallery';
 import { PortfolioPage } from './components/PortfolioPage';
+import { GalleryPage } from './components/GalleryPage';
 import { AboutSection } from './components/AboutSection';
 import { ProcessSection } from './components/ProcessSection';
 import { Testimonials } from './components/Testimonials';
@@ -100,6 +101,21 @@ export default function App() {
       <PortfolioPage
         onNavigateHome={() => navigateTo('/')}
         onSelectProjectForContact={handleSelectProjectForContact}
+      />
+    );
+  }
+
+  // Dedicated /gallery YouTube / Manipulation Gallery route
+  if (
+    currentPath === '/gallery' ||
+    currentPath === '/gallery/' ||
+    currentPath.startsWith('/gallery') ||
+    currentPath === '/manipulation-gallery' ||
+    currentPath.startsWith('/manipulation-gallery')
+  ) {
+    return (
+      <GalleryPage
+        onNavigateHome={() => navigateTo('/')}
       />
     );
   }
