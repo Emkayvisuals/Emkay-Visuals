@@ -185,7 +185,7 @@ export const DEFAULT_PORTFOLIO_CONTENT = {
     metaTitle: 'Emkay Visuals – Graphic Designer & Motion Graphics Artist',
     metaDescription:
       'High-end, futuristic portfolio for Emkay Visuals – Graphic Designer & Motion Graphics Artist with 5+ years of experience in Posters, Visual Branding, Movie Art, Thumbnails & Motion Graphics.',
-    ogImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
+    ogImage: 'https://emkayvisuals.github.io/emkay.webp',
     ogImageAlt: 'Emkay Visuals – Graphic Design & Motion Art Portfolio Banner',
     faviconUrl: '/favicon.ico',
   },

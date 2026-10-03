@@ -160,7 +160,7 @@ export const AdminSeoTab: React.FC<AdminTabProps> = ({
                 </div>
                 <div className="p-3.5 space-y-1">
                   <span className="text-[10px] uppercase font-semibold text-white/40 tracking-wider">
-                    emkayvisuals.com
+                    emkayvisuals.github.io
                   </span>
                   <h4 className="text-xs font-bold text-white line-clamp-1">
                     {seo.metaTitle || 'Emkay Visuals'}

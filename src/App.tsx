@@ -76,11 +76,21 @@ export default function App() {
       if (ogImage) {
         const ogImg = document.querySelector('meta[property="og:image"]');
         if (ogImg) ogImg.setAttribute('content', ogImage);
+        const ogSecureImg = document.querySelector('meta[property="og:image:secure_url"]');
+        if (ogSecureImg) ogSecureImg.setAttribute('content', ogImage);
         const twImg = document.querySelector('meta[name="twitter:image"]');
         if (twImg) twImg.setAttribute('content', ogImage);
       }
+
+      const currentUrl = `https://emkayvisuals.github.io${window.location.pathname}`;
+      const canonicalLink = document.querySelector('link[rel="canonical"]');
+      if (canonicalLink) canonicalLink.setAttribute('href', currentUrl);
+      const ogUrl = document.querySelector('meta[property="og:url"]');
+      if (ogUrl) ogUrl.setAttribute('content', currentUrl);
+      const twUrl = document.querySelector('meta[name="twitter:url"]');
+      if (twUrl) twUrl.setAttribute('content', currentUrl);
     }
-  }, [tick]);
+  }, [tick, currentPath]);
 
   // Route Dispatching
   if (currentPath === '/admin' || currentPath.startsWith('/admin/')) {

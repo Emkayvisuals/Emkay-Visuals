@@ -17,8 +17,7 @@ let currentSeo = {
   metaTitle: 'Emkay Visuals – Graphic Designer & Motion Graphics Artist',
   metaDescription:
     'High-end, futuristic portfolio for Emkay Visuals – Graphic Designer & Motion Graphics Artist with 5+ years of experience in Posters, Visual Branding, Movie Art, Thumbnails & Motion Graphics.',
-  ogImage:
-    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
+  ogImage: 'https://emkayvisuals.github.io/emkay.webp',
 };
 
 // Attempt to load previously saved SEO metadata from local cache file
@@ -127,6 +126,20 @@ function injectSeoTags(html: string, seo: typeof currentSeo, host?: string): str
   result = result.replace(
     /(<meta\s+name=["']twitter:image["']\s+content=["'])[^"']*?(["'])/i,
     `$1${safeImage}$2`
+  );
+
+  const siteUrl = host ? (host.includes('localhost') ? `http://${host}` : `https://${host}`) : 'https://emkayvisuals.github.io';
+  result = result.replace(
+    /(<link\s+rel=["']canonical["']\s+href=["'])[^"']*?(["'])/i,
+    `$1${siteUrl}$2`
+  );
+  result = result.replace(
+    /(<meta\s+property=["']og:url["']\s+content=["'])[^"']*?(["'])/i,
+    `$1${siteUrl}$2`
+  );
+  result = result.replace(
+    /(<meta\s+name=["']twitter:url["']\s+content=["'])[^"']*?(["'])/i,
+    `$1${siteUrl}$2`
   );
 
   return result;

@@ -543,7 +543,7 @@ export function getPlatformMeta(platform: SocialPlatform) {
         badgeBg: 'bg-white/10 text-white border-white/20',
         hoverBorder: 'hover:border-white/50',
         cardBg: 'bg-white/10 border-white/20 text-white',
-        placeholder: 'e.g. https://emkayvisuals.com',
+        placeholder: 'e.g. https://emkayvisuals.github.io',
       };
     case 'Custom':
     default:
